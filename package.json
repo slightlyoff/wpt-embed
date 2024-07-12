@@ -1,4 +1,19 @@
 {
+  "name": "wpt-embed",
+  "description": "Scripts and Web Components for capturing and displaying WPT traces in a blog",
+  "main": "",
+  "author": "Alex Russell",
+  "repository": "github:slightlyoff/wpt-embed",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.3.0"
+  },
+  "bin": {
+    "fetch-wpt-embed": "src/scripts/fetch"
+  },
+  "scripts": {
+    "fetch": "./src/scripts/fetch"
+  },
   "dependencies": {
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
