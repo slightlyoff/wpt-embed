@@ -1,3 +1,7 @@
+# Output dir
+out
+wpt-traces
+
 # Logs
 logs
 *.log

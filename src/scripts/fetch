@@ -1,0 +1,344 @@
+#!/usr/bin/env node
+
+async function wait(ms=100) {
+  return new Promise((res) => {
+    setTimeout(res, ms);
+  });
+};
+
+// Takes an error-back function and returns an await-compatible 
+// async function that rejects on error and fulfills on success.
+function wrapEBF(ebf, scope) {
+  // The last param to the EBF is assumed to be the callback
+  // We take whatever arguments are passed and add our own 
+  // promise-based handler instead.
+  return async function() {
+    let res, rej;
+    let ret = new Promise((resInt, rejInt) => {
+      res = resInt; rej = rejInt;
+    });
+    ebf.call((scope || this), ...arguments, function(err, data, info) {
+      if(err) { return rej(err); }
+      res(data);
+    });
+    return ret;
+  }
+}
+let ebf = wrapEBF;
+
+(async() => {
+  let commander = await import("commander");
+  let { default: ora } = await import("ora");
+  // let { default: wpt } = await import("webpagetest");
+  let { default: WPT } = await import("webpagetest");
+  let os = await import("node:os");
+  let fs = await import("node:fs/promises");
+  let { join } = await import("node:path");
+  let { cwd } = await import("node:process");
+  let { default: sharp } = await import("sharp");
+
+  let fetchResults = async (opts={}, ids=[], spinner) => {
+    let key = opts.key;
+    let outDir = join(cwd(), opts.output);
+    // Check to see if the output directory exists and, if not, create it
+    try {
+      let outDirStats = await fs.stat(outDir);
+      if(!outDirStats.isDirectory()) {
+        spinner.fail(` specified output directory ${outDir} exists, but is not a directory; aborting.`);
+        return 0;
+      }
+    } catch(e) {
+      spinner.info(`no ouput directory, creating: ${outDir}`);
+      await fs.mkdir(outDir, { recursive: true });
+    }
+
+    // Create per-test output directories, then fetch results
+    for (let testId of ids) {
+      let testDir = join(outDir, testId);
+      if(opts.clean) {
+        try {
+          console.log(`cleaning ${testDir}`);
+          await fs.rm(testDir, { recursive: true });
+          console.log(`claened ${testDir}`);
+        } catch(e) {}
+      }
+
+      await fs.mkdir(testDir, { recursive: true });
+
+      // Default to public instance
+      // TODO: allow instance config
+      let wpt = new WPT("https://www.webpagetest.org", key); 
+
+      // Look for cached results
+      let resultsPath = join(testDir, "results.json");
+      let results;
+      try {
+        if (opts.download) { throw "forcing download"; }
+        results = JSON.parse(await fs.readFile(resultsPath))?.data;
+        if (!results) { throw "cached results error"; }
+        spinner.succeed(` Using cached results for test ${testId}`);
+      } catch(e) {
+        let options = { breakDown: true };
+        spinner.start(` Downloading results for test ${testId}`);
+        results = (await (ebf(wpt.getTestResults, wpt)(testId, options)))?.data;
+        await fs.writeFile(resultsPath, JSON.stringify(results));
+        spinner.succeed(` Results downloaded for test ${testId}`);
+      }
+
+      let baseData = {
+        "id": null,
+        "url": null,
+        "summary": null,
+        "testUrl": null,
+        "location": null,
+        "from": null,
+        "connectivity": null,
+        "bwDown": null,
+        "bwUp": null,
+        "latency": null,
+        "plr": null,
+        "shaperLimit": null,
+        "mobile": null,
+        "completed": null,
+        "testRuns": null,
+      };
+
+      for(let k in baseData) {
+        baseData[k] = results[k];
+      }
+
+      let writeToPath = async (data, path, desc="", replace=false) => {
+        try {
+          await fs.stat(path);
+        } catch(e) {
+          await fs.writeFile(path, data);
+          if (desc) {
+            spinner[ replace ? "start" : "succeed"](
+              ` Wrote ${desc} to ${path}`
+            );
+          }
+        }
+      };
+
+      let downloadToPath = async (url, path, desc="", replace=false) => {
+        try {
+          if (opts.download) { throw "forcing download"; }
+          await fs.stat(path);
+        } catch(e) {
+          spinner.start(` Downloading ${desc}`);
+          let resp = await fetch(url.toString(), {
+            headers: { "X-WPT-API-KEY": opts.key }
+          });
+          if (resp.status == 200) {
+            await fs.writeFile(path, resp.body);
+            spinner[ replace ? "start" : "succeed"](` Downloaded ${desc}`);
+          }
+        }
+      };
+
+      let runs = results.runs;
+      for(let r in runs) {
+        let run = runs[r];
+        spinner.start(` Downloading test run images for test ${testId}, run ${r}`);
+
+        // TODO: make the end metric configurable
+        let fetchViewImages = async (view="firstView") => {
+          let runStr = `${testId}-r:${r}-c:${ view == "firstView" ? 0 : 1}`;
+          let viewData = Object.assign({}, baseData);
+          viewData.view = view;
+          // Nested objects
+          ["pages", "thumbnails", "images"].forEach((o) => {
+            viewData[o] = Object.assign({}, run[view][o]);
+          });
+          // Direct values
+          [ 
+            "firstPaint", 
+            "firstContentfulPaint", 
+            "firstMeaningfulPaint",
+            "lastVisualChange",
+            "visualComplete",
+            "visualComplete85",
+            "visualComplete90",
+            "visualComplete95",
+            "visualComplete99",
+            "SpeedIndex",
+          ].forEach((v) => {
+            viewData[v] = run[view][v];
+          });
+          // TODO: `largestPaints` contains an array of LCP candidates. 
+          //       Should we process here as no LCP is recorded?
+          
+          let viewDir = join(testDir, "runs", r, view);
+          await fs.mkdir(join(viewDir, "filmstrip"), { recursive: true });
+
+          for(let i in run[view].images) {
+            let summary = `${i} image for ${testId}, run ${r}, ${view}`;
+            let imgPath = join(viewDir, `${i}.png`);
+            viewData[i] = `${i}.png`;
+            await downloadToPath(run[view].images[i], imgPath, summary, true);
+          }
+
+          viewData.filmstripFrames = [];
+          spinner.start(` Downloading filmstrip images for ${testId}, run ${r}, ${view}`);
+          let inc = 1;
+          for(let frame of run[view].videoFrames) {
+            let imageURL = new URL(frame.image);
+            imageURL.searchParams.set("fit", opts.timelineImageWidth);
+            let fn = imageURL.searchParams.get("file");
+            let fp = join(viewDir, "filmstrip", fn);
+            await downloadToPath(
+              imageURL, 
+              fp, 
+              `${inc} of ${run[view].videoFrames.length} filmstrip images`,
+              true
+            );
+
+            let frameCopy = Object.assign({}, frame);
+            frameCopy.image = `filmstrip/${fn}`;
+            viewData.filmstripFrames.push(frameCopy);
+
+            // Parse an image to get size, aspect ratio, and other metadata
+            if(inc == 1) {
+              let img0 = sharp(fp);
+              let md = await img0.metadata();
+              viewData.filmstripImageData = Object.assign({}, md);
+              viewData.filmstripAspectRatio = `${md.width} / ${md.height}`;
+            }
+            inc++;
+          }
+          spinner.succeed(` Downloaded ${inc} filmstrip images for ${testId}, run ${r}, ${view}`);
+
+          // Example URL for gif:
+          //    https://www.webpagetest.org/video/video.php?tests=240612_AiDcH3_9XB-r:1-c:0&bg=ffffff&text=222222&end=visual&format=gif
+          //
+          // Example URL for video:
+          //    https://www.webpagetest.org/video/video.php?tests=240612_AiDcH3_9XB-r:1-c:0&bg=ffffff&text=222222&end=visual&format=mp4
+
+          spinner.start(` Downloading videos of ${testId}, run ${r}, ${view}`);
+          let timelineVideoPath = join(viewDir, "timeline.mp4");
+          // let video = (await (ebf(wpt.createVideo, wpt)(testId)));
+          let videoURL = new URL("https://www.webpagetest.org/video/video.php");
+          videoURL.searchParams.set("tests", runStr);
+          videoURL.searchParams.set("end", "visual");
+          videoURL.searchParams.set("format", "mp4");
+          await downloadToPath(
+            videoURL, 
+            timelineVideoPath, 
+            `videos of ${testId}, run ${r}, ${view}`
+          );
+
+          let timelineGifPath = join(viewDir, "timeline.gif");
+          videoURL.searchParams.set("format", "gif");
+          await downloadToPath(
+            videoURL, 
+            timelineGifPath, 
+            `gif of ${testId}, run ${r}, ${view}`
+          );
+
+          spinner.succeed(` Downloaded videos of ${testId}, run ${r}, ${view}`);
+
+          // Write out the summary for the component to consume
+          let viewDataPath = join(viewDir, "timeline.json");
+          await writeToPath(JSON.stringify(viewData), viewDataPath);
+        };
+
+        // First View
+        await fetchViewImages();
+        if(!run.repeatView) { continue; }
+
+        // Repeat View
+        await fetchViewImages("repeatView");
+
+      }
+    }
+  };
+
+  let prog = new commander.Command();
+
+  // args.version("0.0.1")
+    // .option("--blog-author <author>",
+    //         "Full name of the blog author", String)
+    // .option("--site-url <url>",
+    //         "Full base blog URL (e.g. 'https://example.com')", String)
+    // .option("--blog-image-url <url>",
+    //         "Headshot or blog headline image", String)
+    // .option("--pingbacks <pref>",
+    //         "Inclue pingback comments", Boolean)
+    // .option("--no-pingbacks",
+    //         "Ignore pingbacks when importing")
+    // .option("--tweets-to-njk <pref>",
+    //         "Transform inline tweets to Nunjucks for 11ty", Boolean)
+    // .option("--no-tweets-to-njk",
+    //         "Do not transform tweets for 11ty")
+    // .option("-m, --max <number>",
+    //         "Maximum number of entries to transform", Number)
+    // .option("-o, --out [out]",
+    //         "Output directory")
+    // .option("--clean",
+    //         "Remove existing files and directories")
+    // .option("--dry-run",
+    //         "Avoid writing anything to disk")
+    // .option("--config <file>",
+    //         "Path to a JSON-formatted arguments file")
+  prog.version("0.0.1")
+    .requiredOption("-k, --key <key>",
+              "WPT API key", String)
+    .option("-o, --output <dir>", "Output directory name", "./wpt-traces")
+    .option("-c, --clean", 
+              "Removes existing trace results for specified trace ids from the download directory before fetching.", false)
+    .option("-d, --download", 
+              "Force download instead of using cached results", false)
+    .option("-w, --timeline-image-width", 
+              "Width (in pixels) to download timeline images.", 200)
+    .option("-x, --comparison-video", 
+              "Download a side-by-side comparison video in addition to per-timeline videos.", 200)
+    .argument("<ids...>", "WPT test IDs")
+    .addHelpText("before", 
+                 `
+Fetches results of an existing public WebPageTest run into named output directories, downloading JSON, images, and waterfalls. Then processes them to generate a "timeline.json" file for displaying WPT timelines using the <wpt-timeline> Web Component.
+
+The default output directory is "./wpt-traces" relative to the current working directory. Individual trace data will be saved in directories with a structure of:
+
+wpt-traces
+└── 240612_AiDcR6_9Y0
+    ├── results.json
+    ├── runs-timelines.json
+    └── runs
+        ├── 1
+        │   ├── firstView
+        │   │   ├── filmstrip
+        │   │   │   ├── ms_000000.jpg
+        │   │   │   ├── ms_002100.jpg
+        │   │   │   ├── ms_002200.jpg
+        │   │   │   ├── ms_002300.jpg
+        │   │   │   └── ms_003000.jpg
+        │   │   ├── timeline.json
+        │   │   └── waterfall.png
+        │   └── repeatView
+        │   │   ├── filmstrip
+        │   │   │   ├── ms_000000.jpg
+        │   │   |   └── ...
+        │   │   ├── timeline.json
+        │   │   └── waterfall.png
+        └── 2
+            ├── firstView
+            │   ├── filmstrip
+            │   |   └── ...
+            │   ├── timeline.json
+            │   └── waterfall.png
+            └── repeatView
+                └── ...
+
+Example:
+   ./fetch -k <your_key> -o 240612_AiDcR6_9Y0
+`
+    )
+    .parse(process.argv);
+
+  let opt = Object.assign({}, prog.opts());
+  let ids = prog.args;
+
+  let spinner = ora("Starting...").start();
+  await fetchResults(opt, ids, spinner);
+  spinner.stop();
+})();
