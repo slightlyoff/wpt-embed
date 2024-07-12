@@ -255,31 +255,6 @@ let ebf = wrapEBF;
 
   let prog = new commander.Command();
 
-  // args.version("0.0.1")
-    // .option("--blog-author <author>",
-    //         "Full name of the blog author", String)
-    // .option("--site-url <url>",
-    //         "Full base blog URL (e.g. 'https://example.com')", String)
-    // .option("--blog-image-url <url>",
-    //         "Headshot or blog headline image", String)
-    // .option("--pingbacks <pref>",
-    //         "Inclue pingback comments", Boolean)
-    // .option("--no-pingbacks",
-    //         "Ignore pingbacks when importing")
-    // .option("--tweets-to-njk <pref>",
-    //         "Transform inline tweets to Nunjucks for 11ty", Boolean)
-    // .option("--no-tweets-to-njk",
-    //         "Do not transform tweets for 11ty")
-    // .option("-m, --max <number>",
-    //         "Maximum number of entries to transform", Number)
-    // .option("-o, --out [out]",
-    //         "Output directory")
-    // .option("--clean",
-    //         "Remove existing files and directories")
-    // .option("--dry-run",
-    //         "Avoid writing anything to disk")
-    // .option("--config <file>",
-    //         "Path to a JSON-formatted arguments file")
   prog.version("0.0.1")
     .requiredOption("-k, --key <key>",
               "WPT API key", String)
@@ -290,8 +265,8 @@ let ebf = wrapEBF;
               "Force download instead of using cached results", false)
     .option("-w, --timeline-image-width", 
               "Width (in pixels) to download timeline images.", 200)
-    .option("-x, --comparison-video", 
-              "Download a side-by-side comparison video in addition to per-timeline videos.", 200)
+    // .option("-x, --comparison-video", 
+    //           "Download a side-by-side comparison video in addition to per-timeline videos.", 200)
     .argument("<ids...>", "WPT test IDs")
     .addHelpText("before", 
                  `
