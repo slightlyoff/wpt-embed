@@ -57,9 +57,9 @@ let ebf = wrapEBF;
       let testDir = join(outDir, testId);
       if(opts.clean) {
         try {
-          console.log(`cleaning ${testDir}`);
+          spinner.start(` Cleaning ${testDir}`);
           await fs.rm(testDir, { recursive: true });
-          console.log(`claened ${testDir}`);
+          spinner.succeed(` Cleaned ${testDir}`);
         } catch(e) {}
       }
 
@@ -141,7 +141,10 @@ let ebf = wrapEBF;
       };
 
       let downloadToPathsInParallel = async (
-        meta=[], desc, replace=false, maxParallel=Number.MAX_SAFE_INTEGER
+        meta=[], 
+        desc, 
+        replace=false, 
+        maxParallel=8
       ) => {
         let stride = Math.min(meta.length, maxParallel);
         let end = 0;
@@ -217,7 +220,12 @@ let ebf = wrapEBF;
             frameCopy.image = `filmstrip/${fn}`;
             viewData.filmstripFrames.push(frameCopy);
           }
-          await downloadToPathsInParallel(meta);
+          await downloadToPathsInParallel(
+            meta, 
+            "filmstrip images", 
+            false, 
+            opt.parallelDownloads
+          );
 
           // Parse an image to get size, aspect ratio, and other metadata
           if(meta.length > 1) {
@@ -284,6 +292,8 @@ let ebf = wrapEBF;
               "Removes existing trace results for specified trace ids from the download directory before fetching.", false)
     .option("-d, --download", 
               "Force download instead of using cached results", false)
+    .option("-p, --parallel-downloads", 
+              "Number of images to download in parallel.", 10)
     .option("-w, --timeline-image-width", 
               "Width (in pixels) to download timeline images.", 200)
     // .option("-x, --comparison-video", 
