@@ -120,21 +120,41 @@ let ebf = wrapEBF;
         }
       };
 
-      let downloadToPath = async (url, path, desc="", replace=false) => {
+      let downloadToPath = async (url, path, desc="", replace=false, quiet=false) => {
         try {
           if (opts.download) { throw "forcing download"; }
           await fs.stat(path);
         } catch(e) {
-          spinner.start(` Downloading ${desc}`);
+          !quiet && spinner.start(` Downloading ${desc}`);
           let resp = await fetch(url.toString(), {
             headers: { "X-WPT-API-KEY": opts.key }
           });
           if (resp.status == 200) {
             await fs.writeFile(path, resp.body);
-            spinner[ replace ? "start" : "succeed"](` Downloaded ${desc}`);
+            !quiet && spinner[ replace ? "start" : "succeed"](
+              ` Downloaded ${desc}`
+            );
+          } else {
+            spinner.fail(` Failed to download ${url+""}`);
           }
         }
       };
+
+      let downloadToPathsInParallel = async (
+        meta=[], desc, replace=false, maxParallel=Number.MAX_SAFE_INTEGER
+      ) => {
+        let stride = Math.min(meta.length, maxParallel);
+        let end = 0;
+        let batch = meta.slice(end, stride);
+        while(batch.length) {
+          spinner.start(` Downloading ${end}-${end + batch.length} of ${meta.length} ${desc}`);
+          await Promise.allSettled(batch.map((i) => {
+            return downloadToPath(i.url, i.path, "", replace, true);
+          }));
+          end += stride;
+          batch = meta.slice(end, end+stride);
+        }
+      }
 
       let runs = results.runs;
       for(let r in runs) {
@@ -179,34 +199,35 @@ let ebf = wrapEBF;
           }
 
           viewData.filmstripFrames = [];
+          // TODO: issue fetches in parallel
           spinner.start(` Downloading filmstrip images for ${testId}, run ${r}, ${view}`);
-          let inc = 1;
+
+          // Parallel fetch
+          let meta = [];
           for(let frame of run[view].videoFrames) {
             let imageURL = new URL(frame.image);
             imageURL.searchParams.set("fit", opts.timelineImageWidth);
             let fn = imageURL.searchParams.get("file");
             let fp = join(viewDir, "filmstrip", fn);
-            await downloadToPath(
-              imageURL, 
-              fp, 
-              `${inc} of ${run[view].videoFrames.length} filmstrip images`,
-              true
-            );
-
+            meta.push({
+              url: imageURL,
+              path: fp
+            })
             let frameCopy = Object.assign({}, frame);
             frameCopy.image = `filmstrip/${fn}`;
             viewData.filmstripFrames.push(frameCopy);
-
-            // Parse an image to get size, aspect ratio, and other metadata
-            if(inc == 1) {
-              let img0 = sharp(fp);
-              let md = await img0.metadata();
-              viewData.filmstripImageData = Object.assign({}, md);
-              viewData.filmstripAspectRatio = `${md.width} / ${md.height}`;
-            }
-            inc++;
           }
-          spinner.succeed(` Downloaded ${inc} filmstrip images for ${testId}, run ${r}, ${view}`);
+          await downloadToPathsInParallel(meta);
+
+          // Parse an image to get size, aspect ratio, and other metadata
+          if(meta.length > 1) {
+            let img0 = sharp(meta[0].path);
+            let md = await img0.metadata();
+            viewData.filmstripImageData = Object.assign({}, md);
+            viewData.filmstripImageAspectRatio = `${md.width} / ${md.height}`;
+          }
+          spinner.succeed(` Downloaded ${meta.length} filmstrip images for ${testId}, run ${r}, ${view}`);
+ 
 
           // Example URL for gif:
           //    https://www.webpagetest.org/video/video.php?tests=240612_AiDcH3_9XB-r:1-c:0&bg=ffffff&text=222222&end=visual&format=gif
