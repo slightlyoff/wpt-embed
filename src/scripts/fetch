@@ -74,10 +74,12 @@ let ebf = wrapEBF;
       let results;
       try {
         if (opts.download) { throw "forcing download"; }
-        results = JSON.parse(await fs.readFile(resultsPath))?.data;
+        let res = await fs.readFile(resultsPath, { encoding: "utf-8" });
+        results = JSON.parse(res);
         if (!results) { throw "cached results error"; }
         spinner.succeed(` Using cached results for test ${testId}`);
       } catch(e) {
+        console.error(e);
         let options = { breakDown: true };
         spinner.start(` Downloading results for test ${testId}`);
         results = (await (ebf(wpt.getTestResults, wpt)(testId, options)))?.data;
@@ -201,15 +203,18 @@ let ebf = wrapEBF;
             await downloadToPath(run[view].images[i], imgPath, summary, true);
           }
 
+          // Thumbnail image URL:
+          //  https://www.webpagetest.org/thumbnail.php?test=240612_AiDcH3_9XB&fit=150&file=video_1/ms_000000.jpg
+
           viewData.filmstripFrames = [];
-          // TODO: issue fetches in parallel
           spinner.start(` Downloading filmstrip images for ${testId}, run ${r}, ${view}`);
 
           // Parallel fetch
           let meta = [];
           for(let frame of run[view].videoFrames) {
             let imageURL = new URL(frame.image);
-            imageURL.searchParams.set("fit", opts.timelineImageWidth);
+            // Note: the image URLs here don't respect the "fit" resizing param
+            // imageURL.searchParams.set("fit", opts.timelineImageWidth);
             let fn = imageURL.searchParams.get("file");
             let fp = join(viewDir, "filmstrip", fn);
             meta.push({
