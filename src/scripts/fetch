@@ -39,6 +39,7 @@ let ebf = wrapEBF;
 
   let fetchResults = async (opts={}, ids=[], spinner) => {
     let key = opts.key;
+    let indent = opts.prettyPrint ? 2 : 0;
     let outDir = join(cwd(), opts.output);
     // Check to see if the output directory exists and, if not, create it
     try {
@@ -79,11 +80,13 @@ let ebf = wrapEBF;
         if (!results) { throw "cached results error"; }
         spinner.succeed(` Using cached results for test ${testId}`);
       } catch(e) {
-        console.error(e);
         let options = { breakDown: true };
         spinner.start(` Downloading results for test ${testId}`);
         results = (await (ebf(wpt.getTestResults, wpt)(testId, options)))?.data;
-        await fs.writeFile(resultsPath, JSON.stringify(results));
+        await fs.writeFile(
+          resultsPath, 
+          JSON.stringify(results, null, indent)
+        );
         spinner.succeed(` Results downloaded for test ${testId}`);
       }
 
@@ -111,6 +114,7 @@ let ebf = wrapEBF;
 
       let writeToPath = async (data, path, desc="", replace=false) => {
         try {
+          if (replace) { throw "replacing"; }
           await fs.stat(path);
         } catch(e) {
           await fs.writeFile(path, data);
@@ -176,7 +180,22 @@ let ebf = wrapEBF;
             viewData[o] = Object.assign({}, run[view][o]);
           });
           // Direct values
+          // 
+          // TODO: should we add these?:
+          //
+          //  loadEvenStart
+          //  loadEventEnd
+          //  domContentLoadedEventStart
+          //  domContentLoadedEventEnd
+          //  domInteractive
+          //  render
+          //  TTIMeasurementEnd
+          //  TotalBlockingTime
+          //
           [ 
+            "loadTime",
+            "docTime",
+            "fullyLoaded",
             "firstPaint", 
             "firstContentfulPaint", 
             "firstMeaningfulPaint",
@@ -190,8 +209,11 @@ let ebf = wrapEBF;
           ].forEach((v) => {
             viewData[v] = run[view][v];
           });
-          // TODO: `largestPaints` contains an array of LCP candidates. 
-          //       Should we process here as no LCP is recorded?
+          if(run[view].chromeUserTiming) {
+            run[view].chromeUserTiming.forEach((e) => {
+              viewData[e.name] = e.time;
+            });
+          }
           
           let viewDir = join(testDir, "runs", r, view);
           await fs.mkdir(join(viewDir, "filmstrip"), { recursive: true });
@@ -253,6 +275,26 @@ let ebf = wrapEBF;
           // let video = (await (ebf(wpt.createVideo, wpt)(testId)));
           let videoURL = new URL("https://www.webpagetest.org/video/video.php");
           videoURL.searchParams.set("tests", runStr);
+          // TODO: support other end points, see:
+          //
+          //  https://github.com/catchpoint/WebPageTest/blob/master/www/video/filmstrip.inc.php#L125
+          //
+          //
+          // Alternatives:
+          //  
+          //    - "visual"
+          //    - "load" 
+          //    - "full" 
+          //    - "doc" 
+          //    - "all" 
+          //    - "aft" 
+          //
+          // Open questions for alternative end points:
+          //
+          //    - Should we always download to the very latest?
+          //    - Should we record each of these so the component 
+          //      can decide at runtime? 
+          //
           videoURL.searchParams.set("end", "visual");
           videoURL.searchParams.set("format", "mp4");
           await downloadToPath(
@@ -273,7 +315,12 @@ let ebf = wrapEBF;
 
           // Write out the summary for the component to consume
           let viewDataPath = join(viewDir, "timeline.json");
-          await writeToPath(JSON.stringify(viewData), viewDataPath);
+          await writeToPath(
+            JSON.stringify(viewData, null, indent), 
+            viewDataPath,
+            "",
+            opts.rebuildTimelines
+          );
         };
 
         // First View
@@ -282,7 +329,6 @@ let ebf = wrapEBF;
 
         // Repeat View
         await fetchViewImages("repeatView");
-
       }
     }
   };
@@ -294,16 +340,22 @@ let ebf = wrapEBF;
               "WPT API key", String)
     .option("-o, --output <dir>", "Output directory name", "./wpt-traces")
     .option("-c, --clean", 
-              "Removes existing trace results for specified trace ids from the download directory before fetching.", false)
+            "Removes existing trace results for specified trace ids from the download directory before fetching.", false)
+    .option("-rt, --rebuild-timelines",
+            "Uses cached results.json and media resources, but rebuilds each run's timline.json file. Useful after version upgrades.", 
+              false
+    )
+    .option("-pp, --pretty-print", "Pretty-print JSON?", false
+    )
     .option("-d, --download", 
-              "Force download instead of using cached results", false)
+            "Force download instead of using cached results", false)
     .option("-p, --parallel-downloads", 
-              "Number of images to download in parallel.", 10)
+            "Number of images to download in parallel.", 10)
     .option("-w, --timeline-image-width", 
-              "Width (in pixels) to download timeline images.", 200)
+            "Width (in pixels) to download timeline images.", 200)
     // .option("-x, --comparison-video", 
     //           "Download a side-by-side comparison video in addition to per-timeline videos.", 200)
-    .argument("<ids...>", "WPT test IDs")
+    .argument("<ids...>", "WPT test IDs, space separated")
     .addHelpText("before", 
                  `
 Fetches results of an existing public WebPageTest run into named output directories, downloading JSON, images, and waterfalls. Then processes them to generate a "timeline.json" file for displaying WPT timelines using the <wpt-timeline> Web Component.
@@ -313,7 +365,7 @@ The default output directory is "./wpt-traces" relative to the current working d
 wpt-traces
 └── 240612_AiDcR6_9Y0
     ├── results.json
-    ├── runs-timelines.json
+    ├── runs-timelines.json #TODO
     └── runs
         ├── 1
         │   ├── firstView
