@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+    </style>
+    <script type="module">
+      import "../src/components/wpt-embed-filmstrip.js";
+    </script>
+  </head>
+  <body>
+    <h2>Default</h2>
+    <wpt-embed-filmstrip
+      test-id="240612_AiDcR6_9Y0"
+      timeline-url="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
+      size="small"
+      debug
+      test-name="TEST">
+    </wpt-embed-filmstrip>
+
+    <wpt-embed-filmstrip
+      test-id="240612_AiDcR6_9Y0"
+      timeline-url="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
+      size="medium"
+      interval="60fps"
+      test-name="TEST">
+    </wpt-embed-filmstrip>
+
+    <wpt-embed-filmstrip
+      test-id="240612_AiDcR6_9Y0"
+      timeline-url="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
+      size="large"
+      interval="1s"
+      test-name="TEST">
+    </wpt-embed-filmstrip>
+
+    <wpt-embed-filmstrip
+      test-id="240612_AiDcH3_9XB"
+      timeline-url="../out/240612_AiDcH3_9XB/runs/3/repeatView/timeline.json"
+      size="large"
+      interval="100"
+      test-name="TEST">
+    </wpt-embed-filmstrip>
+  </body>
+</html>

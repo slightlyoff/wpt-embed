@@ -1,5 +1,16 @@
 #!/usr/bin/env node
 
+/**
+ * 
+ * TODO: global issues still unresolved:
+ * 
+ *  - support for a `traces.json` input file to derive options from
+ *  - support for getting keys from trace config file or env var
+ *  - reasonable docs in the README
+ *  - support for different "end" params
+ *    - should also ensure that we always download max images; unsure about how to handle videos
+ */
+
 async function wait(ms=100) {
   return new Promise((res) => {
     setTimeout(res, ms);
