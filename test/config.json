@@ -1,0 +1,7 @@
+{
+  "output": "./json-out",
+  "rebuildTimelines": true,
+  "ids": ["240612_AiDcR6_9Y0", "240612_AiDcH3_9XB"],
+  "key": "YOUR_KEY_HERE",
+  "prettyPrint": true
+}
