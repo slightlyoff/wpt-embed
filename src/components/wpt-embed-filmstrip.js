@@ -1,8 +1,7 @@
 /**
  * TODO:
  * 
- * - refactor to support multiple, ordered <wpt-trace> 
- *   element children for comparative trace support
+ * - rename file from `wpt-embed-filmstrip` -> `wpt-filmstrip`
  * - options to display connection and device params
  * - options to embed video, timeline, and connections
  * - sync'd scroll for timeline and connections
@@ -54,7 +53,23 @@ let toCamelCase = (() => {
   };
 })();
 
-class WPTEmbedFilmstrip extends HTMLElement {
+class WPTTestRenderer {
+
+  testElement = null;
+
+  get data() {
+    return this?.testElement?.data;
+  }
+
+}
+
+class WPTFilmstrip extends HTMLElement {
+
+  static observedAttributes = [
+    "aspect-ratio",
+    "size",
+    "interval",
+  ];
 
   // TODO: content-visibility and lazy loading for long filmstrips
   static styles = `
@@ -82,7 +97,7 @@ class WPTEmbedFilmstrip extends HTMLElement {
       padding-right: 100%;
     }
 
-    #filmstrip-row {
+    .filmstrip-row {
       & img {
         border: 1px solid black;
 
@@ -93,11 +108,11 @@ class WPTEmbedFilmstrip extends HTMLElement {
       }
     }
 
-    #meta {
+    .meta {
       text-align: left;
     }
 
-    #labels {
+    .labels {
       position: sticky;
       display: inline-block;
       top: 0px;
@@ -110,24 +125,24 @@ class WPTEmbedFilmstrip extends HTMLElement {
     }
     
     :host([size="small"]) {
-      #filmstrip-row img {
+      .filmstrip-row img {
         width: 50px;
       }
     }
 
     :host([size="medium"]) {
-      #filmstrip-row img {
+      .filmstrip-row img {
         width: 100px;
       }
     }
 
     :host([size="large"]) {
-      #filmstrip-row img {
+      .filmstrip-row img {
         width: 200px;
       }
     }
 
-    #filmstrip-meta {
+    .filmstrip-meta {
       padding: 1em;
     }
   `;
@@ -140,17 +155,6 @@ class WPTEmbedFilmstrip extends HTMLElement {
           <tbody>
             <tr id="timing">
             </tr>
-            <tr id="meta-row">
-              <td id="meta">
-                <div id="labels">
-                  <a id="test-link" target="_new">
-                    <span id="test-name"></span>
-                  </a>
-                </div>
-              </td>
-            </tr>
-            <tr id="filmstrip-row">
-            </td>
           </tbody>
         </table>
       </div>
@@ -158,15 +162,8 @@ class WPTEmbedFilmstrip extends HTMLElement {
     return document.body.lastElementChild.content;
   })();
 
-  static observedAttributes = [
-    "test-id",
-    "timeline-url",
-    "timeline-video",
-    "aspect-ratio",
-    // "size",
-    "test-name",
-    "interval",
-  ];
+  static tagName = "wpt-filmstrip";
+  get tagName() { return this.constructor.tagName; }
 
   constructor() {
     super();
@@ -216,55 +213,228 @@ class WPTEmbedFilmstrip extends HTMLElement {
         mfd = 1;
     }
     this.#_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: mfd });
-    this.buildFilmstrip(); 
   }
-  get interval()  { return this.#_interval; }
+  get interval() { return this.#_interval; }
+  getTimingFor(ms=0) {
+    // TODO: move this to cloning a tempalate sub-tree & configuring
+    let td = document.createElement("td");
+    let s = document.createElement("span");
+    s.innerText = this.#_tf.format(ms / 1000)+"s";
+    td.appendChild(s);
+    return td;
+  }
 
-  #_timelineUrl = "";
-  set timelineUrl(i) { this.updateTimeline(i); }
-  get timelineUrl()  { return this.#_timelineUrl; }
+  connectedCallback() {
+    this.wireElements();
+  }
 
-  #_timelineData = null;
+  get #tests() {
+    // TODO: cache
+    return Array.from(this.children).filter((e) => {
+      return e.tagName === WPTTest.tagName; 
+    });
+  }
+
+  updateTests(e) {
+    // Get the maximum duration
+    let durations = this.#tests.map((t) => { return t.duration; })
+    let end = Math.max(...durations);
+    // TODO: can this cut off the last frame?
+    let timings = [];
+    for(let x=0; x <= end; x+=this.#_intervalMs) {
+      timings.push(this.getTimingFor(x));
+    }
+    this.byId("timing").replaceChildren(...timings);
+
+    // while(this.byId("timing").nextElementSibling) {
+    //   this.byId("timing").nextElementSibling.remove();
+    // }
+    this.#tests.forEach((t) => {
+      t.renderInto(
+        this.#_intervalMs, 
+        timings.length, 
+        end,
+        this.byId("main-table").tBodies[0]
+      );
+    });
+  }
+
+  #wired = false;
+  byId(id) { return this.shadowRoot.getElementById(id); }
+  wireElements() {
+    // Prevent memory leaks
+    if (this.#wired) { return; }
+    this.#wired = true;
+
+    let sr = this.shadowRoot;
+    let listen = (id, evt, method) => {
+      let m = (typeof method == "string") ?  this[method].bind(this) : method;
+      this.byId(id).addEventListener(evt, m);
+    };
+
+    addStyles(sr, WPTFilmstrip.styles);
+
+    sr.appendChild(WPTFilmstrip.template.cloneNode(true));
+
+    this.addEventListener("test-modified", this.updateTests);
+  }
+}
+customElements.define(WPTFilmstrip.tagName, WPTFilmstrip);
+
+/**
+ * Does not renders its own Shadow DOM due to the <table> based layout, 
+ * but owns data for a single timeline, loads it, and notifies the parent when
+ * re-rendering is required. Must be nested inside a <wpt-filmstrip>.
+ * 
+ * Notifies parent on attribute changes.
+ */
+class WPTTest extends HTMLElement {
+
+  static observedAttributes = [
+    "label",
+    "timeline",
+    "timeline-video",
+    "aspect-ratio",
+    "size",
+    "test-name",
+    "interval",
+  ];
+
+  static tagName = "wpt-test";
+  get tagName() { return this.constructor.tagName; }
+
+  #dirty = false;
+  #maybeNotify() {
+    this.#dirty = true;
+    if(this.#connected) {
+      this.dispatchEvent(new CustomEvent("test-modified", {
+        bubbles: true,
+      }));
+    }
+  }
+
+  #connected = false;
+  connectedCallback() {
+    if(this.parentNode && 
+       this.parentNode?.tagName === WPTFilmstrip.tagName) {
+        this.#connected = true; 
+        this.#maybeNotify();
+    }
+  }
+
+  data = null;
+  #_timeline = "";
+  set timeline(i) { this.updateTimeline(i); }
+  get timeline()  { return this.#_timeline; }
+
+  get duration() {
+    return this?.data?.visualComplete || 0;
+  }
+
   async updateTimeline(url) {
-    if( (!url) || (url === this.#_timelineUrl)) { return; }
+    if( (!url) || (url === this.#_timeline)) { return; }
 
-    this.#_timelineUrl = url; 
+    this.#_timeline = url; 
     // Fetch and parse
     let r = await fetch(url);
-    this.#_timelineData = await r.json();
-    this.buildFilmstrip();
+    this.data  = await r.json();
+    this.#maybeNotify();
   }
 
-  getFilmstripImage(meta) {
-    let timelineSrc = new URL(this.#_timelineUrl, window.location);
-    let src = new URL(meta.image, timelineSrc);
-    let td  = this.shadowRoot.createElement("td");
-    let i = this.shadowRoot.createElement("img");
-    i.loading = "lazy";
-    i.decodeing = "asyn";
-    i.src = src.toString();
-    td.appendChild(i);
-    let d = this.shadowRoot.createElement("div");
-    d.className = "pct";
-    d.innerText = `${meta.VisuallyComplete}%`;
-    td.appendChild(d);
-    return td;
+  attributeChangedCallback(name, oldValue, newValue) {
+    if(
+      WPTTest.observedAttributes.includes(name) &&
+      oldValue !== newValue
+    ) {
+      let n = toCamelCase(name);
+      this[n] = newValue;
+      this.#maybeNotify(n, newValue);
+    }
   }
 
-  getTimingFor(ms=0) {
-    let td  = this.shadowRoot.createElement("td");
-    let s = this.shadowRoot.createElement("span");
-    td.appendChild(s);
-    s.innerText = this.#_tf.format(ms / 1000)+"s";
-    return td;
+  static rowTemplate = (() => {
+    document.body.insertAdjacentHTML("beforeend", `
+    <template>
+      <!-- start -->
+      <tr class="meta-row">
+        <td class="meta">
+          <div class="labels">
+            <a class="test-link" target="_new">
+              <span class="test-name"></span>
+            </a>
+          </div>
+        </td>
+      </tr>
+      <tr class="filmstrip-row">
+      </tr>
+      <!-- end -->
+    </template>`);
+    return document.body.lastElementChild.content;
+  })();
+
+  #fragStart = null;
+  #fragEnd = null;
+  #extracted = null;
+  extract() {
+    if(this.#fragStart) { 
+      if(this.#extracted) { return this.#extracted; }
+      let r = new Range();
+      r.setStartBefore(this.#fragStart);
+      r.setEndAfter(this.#fragEnd);
+      this.#extracted = r.extractContents();
+      r.detach();
+      return this.#extracted;
+    }
   }
 
-  buildFilmstrip() {
-    if(!this.#_timelineData) { return; }
-    let framesMeta = Array.from(this.#_timelineData.filmstripFrames);
-    let timings = [];
+  disconnectedCallback() {
+    this.extract();
+  }
+
+  renderInto(interval=100, frameCount, totalDuration, container) {
+    if(!this.data) { return; }
+    let f;
+    if(this.#fragStart) { 
+      // Remove it from wherever it is...
+      f = this.extract();
+      if(!this.#dirty) { 
+        // ...and put it back where it's supposed to go.
+        container.append(f); 
+        this.#extracted = null;
+        return;
+      }
+    }
+
+    f = WPTTest.rowTemplate.cloneNode(true);
+    let comments = Array.from(f.childNodes).filter((n) => { 
+      return n.nodeType === 8; 
+    });
+    this.#fragStart = comments.shift();
+    this.#fragEnd = comments.shift();
+    f.querySelector(".test-link").setAttribute("href", this.data.summary);
+    f.querySelector(".meta").setAttribute("colspan", frameCount);
+    f.querySelector(".test-name").innerText = this.data.url;
+    let frames = this.getFrames(interval, frameCount, totalDuration);
+    f.querySelector(".filmstrip-row").replaceChildren(...frames);
+    container.append(f);
+    this.#extracted = null;
+  }
+
+  static imgTemplate = (() => {
+    document.body.insertAdjacentHTML("beforeend", `
+    <template>
+      <td>
+        <img loading="lazy" decoding="async">
+        <div class="pct"></div>
+      </td>
+    </template>`);
+    return document.body.lastElementChild.content;
+  })();
+
+  getFrames(interval, totalDuration, frameCount) {
+    let framesMeta = Array.from(this.data.filmstripFrames);
     let frames = [];
-    let end = this.#_timelineData.visualComplete;
+    let end = this.data.visualComplete;
     let current = 0;
     let currentMeta = framesMeta.shift();
     let nextMeta = framesMeta.shift();
@@ -283,65 +453,31 @@ class WPTEmbedFilmstrip extends HTMLElement {
         // TODO: update text
         frames.push(c);
       }
-      timings.push(this.getTimingFor(current));
-      current += this.#_intervalMs;
+      current += interval;
     }
-    this.byId("test-link").setAttribute("href", this.#_timelineData.summary);
-    this.byId("meta").setAttribute("colspan", frames.length);
-    this.byId("test-name").innerText = this.#_timelineData.url;
-    this.byId("filmstrip-row").replaceChildren(...frames);
-    this.byId("timing").replaceChildren(...timings);
-  }
-
-  #_testId = "";
-  set testId(i) { this.#_testId = i; }
-  get testId()  { return this.#_testId; }
-
-  #_timelineVideo = "";
-  set timelineVideo(i) { this.#_timelineVideo = i; }
-  get timelineVideo()  { return this.#_timelineVideo; }
-
-  #_aspectRatio = "";
-  set aspectRatio(i) { this.#_aspectRatio = i; }
-  get aspectRatio()  { return this.#_aspectRatio; }
-
-  /*
-  #_size = "small";
-  set size(i) { this.#_size = i; }
-  get size()  { return this.#_size; }
-  */
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if(
-      WPTEmbedFilmstrip.observedAttributes.includes(name) &&
-      oldValue !== newValue
-    ) {
-      this[toCamelCase(name)] = newValue;
+    if(end < totalDuration) {
+      // TODO: Fixup colspan for last frame if needed
+      console.log(end, totalDuration, current, frameCount)
     }
+    return frames;
   }
 
-  connectedCallback() {
-    this.wireElements();
+  getFilmstripImage(meta) {
+    let fragment = WPTTest.imgTemplate.cloneNode(true);
+    let i = fragment.querySelector("img");
+    let timelineSrc = new URL(this.#_timeline, window.location);
+    let src = new URL(meta.image, timelineSrc);
+    i.src = src.toString();
+    let d = fragment.querySelector("div");
+    d.innerText = `${meta.VisuallyComplete}%`;
+    return fragment.firstElementChild;
   }
 
-  #wired = false;
-  byId(id) { return this.shadowRoot.getElementById(id); }
-  wireElements() {
-    // Prevent memory leaks
-    if (this.#wired) { return; }
-    this.#wired = true;
-
-    let sr = this.shadowRoot;
-    let listen = (id, evt, method) => {
-      let m = (typeof method == "string") ?  this[method].bind(this) : method;
-      this.byId(id).addEventListener(evt, m);
-    };
-
-    addStyles(sr, WPTEmbedFilmstrip.styles);
-
-    sr.appendChild(WPTEmbedFilmstrip.template.cloneNode(true));
+  constructor() {
+    super();
   }
+
 }
-customElements.define("wpt-embed-filmstrip", WPTEmbedFilmstrip);
+customElements.define(WPTTest.tagName, WPTTest);
 
-export default WPTEmbedFilmstrip;
+export default WPTFilmstrip;

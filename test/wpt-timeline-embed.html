@@ -9,36 +9,53 @@
   </head>
   <body>
     <h2>Default</h2>
-    <wpt-embed-filmstrip
-      test-id="240612_AiDcR6_9Y0"
-      timeline-url="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
+    <wpt-filmstrip size="small" debug>
+      <wpt-test
+        timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
+        test-name="TEST">
+      </wpt-test>
+    </wpt-filmstrip>
+
+    <wpt-filmstrip size="medium" interval="60fps"">
+      <wpt-test
+        timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
+        test-name="TEST">
+      </wpt-test>
+    </wpt-filmstrip>
+
+    <wpt-filmstrip size="large" interval="1s">
+      <wpt-test
+        timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json">
+      </wpt-test>
+    </wpt-filmstrip>
+
+    <wpt-filmstrip size="large" interval="100">
+      <wpt-test
+        timeline="../out/240612_AiDcH3_9XB/runs/3/repeatView/timeline.json"
+        test-name="TEST">
+      </wpt-test>
+    </wpt-filmstrip>
+
+    <wpt-filmstrip 
+      style="display: block; max-width: 80%; margin: auto;"
       size="small"
-      debug
-      test-name="TEST">
-    </wpt-embed-filmstrip>
-
-    <wpt-embed-filmstrip
-      test-id="240612_AiDcR6_9Y0"
-      timeline-url="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
-      size="medium"
-      interval="60fps"
-      test-name="TEST">
-    </wpt-embed-filmstrip>
-
-    <wpt-embed-filmstrip
-      test-id="240612_AiDcR6_9Y0"
-      timeline-url="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
-      size="large"
-      interval="1s"
-      test-name="TEST">
-    </wpt-embed-filmstrip>
-
-    <wpt-embed-filmstrip
-      test-id="240612_AiDcH3_9XB"
-      timeline-url="../out/240612_AiDcH3_9XB/runs/3/repeatView/timeline.json"
-      size="large"
       interval="100"
-      test-name="TEST">
-    </wpt-embed-filmstrip>
+      id="pair-container">
+      <wpt-test
+        label="First View"
+        timeline="../out/240612_AiDcH3_9XB/runs/3/firstView/timeline.json">
+      </wpt-test>
+      <wpt-test
+        label="Repeat View"
+        timeline="../out/240612_AiDcH3_9XB/runs/3/repeatView/timeline.json">
+      </wpt-test>
+    </wpt-filmstrip>
+
+    <button onclick="document.getElementById('pair-container').lastElementChild.remove();">
+      remove last
+    </button>
+    <button onclick="document.getElementById('pair-container').appendChild(document.getElementById('pair-container').lastElementChild.cloneNode(true));">
+      clone last
+    </button>
   </body>
 </html>
