@@ -71,7 +71,6 @@ class WPTFilmstrip extends HTMLElement {
     "interval",
   ];
 
-  // TODO: content-visibility and lazy loading for long filmstrips
   static styles = `
     * {
       box-sizing: border-box;
@@ -100,7 +99,7 @@ class WPTFilmstrip extends HTMLElement {
     .filmstrip-row {
       & img {
         border: 1px solid black;
-
+        content-visibility: auto;
       }
 
       & .pct {
@@ -127,18 +126,21 @@ class WPTFilmstrip extends HTMLElement {
     :host([size="small"]) {
       .filmstrip-row img {
         width: 50px;
+        contain-intrinsic-width: 50px;
       }
     }
 
     :host([size="medium"]) {
       .filmstrip-row img {
         width: 100px;
+        contain-intrinsic-width: 100px;
       }
     }
 
     :host([size="large"]) {
       .filmstrip-row img {
         width: 200px;
+        contain-intrinsic-width: 200px;
       }
     }
 
@@ -170,11 +172,6 @@ class WPTFilmstrip extends HTMLElement {
     let shadow = this.attachShadow({ mode: "open" });
   }
 
-  // #timingFormat = Intl.NumberFormat("en-US", {
-  //   style: "unit",
-  //   unit: "second",
-  //   minimumFractionDigits: 1
-  // });
   #_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: 1 });
   #_intervalMs = 100;
   #_interval = "100";
@@ -216,7 +213,6 @@ class WPTFilmstrip extends HTMLElement {
   }
   get interval() { return this.#_interval; }
   getTimingFor(ms=0) {
-    // TODO: move this to cloning a tempalate sub-tree & configuring
     let td = document.createElement("td");
     let s = document.createElement("span");
     s.innerText = this.#_tf.format(ms / 1000)+"s";
@@ -246,9 +242,6 @@ class WPTFilmstrip extends HTMLElement {
     }
     this.byId("timing").replaceChildren(...timings);
 
-    // while(this.byId("timing").nextElementSibling) {
-    //   this.byId("timing").nextElementSibling.remove();
-    // }
     this.#tests.forEach((t) => {
       t.renderInto(
         this.#_intervalMs, 
