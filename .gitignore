@@ -1,6 +1,7 @@
 # Output dir
 out
 wpt-traces
+json-out
 
 # Logs
 logs

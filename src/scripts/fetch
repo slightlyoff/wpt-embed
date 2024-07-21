@@ -38,7 +38,7 @@ function wrapEBF(ebf, scope) {
 let ebf = wrapEBF;
 
 (async() => {
-  let commander = await import("commander");
+  let { Command, Option } = await import("commander");
   let { default: ora } = await import("ora");
   // let { default: wpt } = await import("webpagetest");
   let { default: WPT } = await import("webpagetest");
@@ -262,7 +262,7 @@ let ebf = wrapEBF;
             meta, 
             "filmstrip images", 
             false, 
-            opt.parallelDownloads
+            opts.parallelDownloads
           );
 
           // Parse an image to get size, aspect ratio, and other metadata
@@ -344,29 +344,61 @@ let ebf = wrapEBF;
     }
   };
 
-  let prog = new commander.Command();
+  let prog = new Command();
 
   prog.version("0.0.1")
-    .requiredOption("-k, --key <key>",
-              "WPT API key", String)
-    .option("-o, --output <dir>", "Output directory name", "./wpt-traces")
-    .option("-c, --clean", 
-            "Removes existing trace results for specified trace ids from the download directory before fetching.", false)
-    .option("-rt, --rebuild-timelines",
-            "Uses cached results.json and media resources, but rebuilds each run's timline.json file. Useful after version upgrades.", 
-              false
+    // TODO: make key required from *some* source
+    .addOption(
+      new Option("-k, --key <key>", "WPT API key")
+            .env("WPT_KEY")
     )
-    .option("-pp, --pretty-print", "Pretty-print JSON?", false
+    .addOption(
+      new Option("-o, --output <dir>", "Output directory name")
+            .default("./wpt-traces")
+            .env("WPT_OUT_DIR")
     )
-    .option("-d, --download", 
-            "Force download instead of using cached results", false)
-    .option("-p, --parallel-downloads", 
-            "Number of images to download in parallel.", 10)
-    .option("-w, --timeline-image-width", 
-            "Width (in pixels) to download timeline images.", 200)
+    .addOption(
+      new Option("-c, --clean", 
+            "Removes existing trace results for specified trace ids from the download directory before fetching.")
+            .env("WPT_CLEAN")
+    )
+    .addOption(
+      new Option("-rt, --rebuild-timelines",
+            "Uses cached results.json and media resources, but rebuilds each run's timline.json file. Useful after version upgrades.")
+            .env("WPT_REBUILD_TIMELINES")
+    )
+    .addOption(
+      new Option("-pp, --pretty-print", "Pretty-print JSON?")
+            .env("WPT_PRETTY_PRINT")
+    )
+    .addOption(
+      new Option("-d, --download", 
+            "Force download instead of using cached results")
+            .env("WPT_DOWNLOAD")
+    )
+    .addOption(
+      new Option("-p, --parallel-downloads <concurrent>", 
+            "Number of images to download in parallel.")
+            .default(10)
+            .env("WPT_PARALLEL_DOWNLOADS")
+            .argParser(parseInt)
+    )
+    // TODO: implement
+    .addOption(
+      new Option("-w, --timeline-image-width <width>", 
+            "Width (in pixels) to download timeline images.")
+            .default(200)
+            .env("WPT_TIMELINE_IMAGE_WIDTH")
+            .argParser(parseInt)
+    )
+    .addOption(
+      new Option("-j, --json-config <path>",
+            "Path to a JSON configuration file. Command-line arguments override values specified in the file.")
+            .env("WPT_JSON_CONFIG")
+    )
     // .option("-x, --comparison-video", 
     //           "Download a side-by-side comparison video in addition to per-timeline videos.", 200)
-    .argument("<ids...>", "WPT test IDs, space separated")
+    .argument("[ids...]", "WPT test IDs, space separated")
     .addHelpText("before", 
                  `
 Fetches results of an existing public WebPageTest run into named output directories, downloading JSON, images, and waterfalls. Then processes them to generate a "timeline.json" file for displaying WPT timelines using the <wpt-timeline> Web Component.
@@ -404,15 +436,62 @@ wpt-traces
                 └── ...
 
 Example:
-   ./fetch -k <your_key> -o 240612_AiDcR6_9Y0
+
+    ./src/scripts/wpt-fetch -k <your_key> -o <out_dir> 240612_AiDcR6_9Y0
+
+Example with JSON configuration:
+
+    ./src/scripts/wpt-fetch -j tests.json
 `
     )
     .parse(process.argv);
+  
+  // Options priority (lowest to highest):
+  //
+  //  - JSON config
+  //  - Environment variables
+  //  - CLI
+  //
+  // The second two are already handled by Commander. All we need to do is build
+  // a final option set by:
+  //
+  //  - Generate a list of explicity set
+  //  - Generate a list of values that have been defaulted
+  //  - Getting values from the JSON config
+  //  - Merge in all values that have been explicitly set
+  //  - Merge in only unset values that have been defaulted
+  //
 
-  let opt = Object.assign({}, prog.opts());
-  let ids = prog.args;
+  let rawOpts = prog.opts();
+
+  let defaulted = {};
+  let explicit = {};
+  for(let o in prog._optionValueSources) {
+    if(prog._optionValueSources[o] === "default") {
+      defaulted[o] = rawOpts[o];
+    } else {
+      explicit[o] = rawOpts[o];
+    }
+  }
+  let jsonOpts = {};
+  if(rawOpts.jsonConfig) {
+    let jsonFilePath = join(cwd(), rawOpts.jsonConfig);
+    try {
+      let res = await fs.readFile(jsonFilePath, { encoding: "utf-8" });
+      let jsonData = JSON.parse(res);
+      if (!jsonData) { throw "config file parse failed"; }
+      jsonOpts = jsonData;
+    } catch(e) {
+      console.error(`failed to read: ${jsonFilePath}`);
+      console.dir(e);
+    }
+  }
+
+  let opts = Object.assign({}, defaulted, jsonOpts, explicit);
+
+  let ids = jsonOpts?.ids || prog.args;
 
   let spinner = ora("Starting...").start();
-  await fetchResults(opt, ids, spinner);
+  await fetchResults(opts, ids, spinner);
   spinner.stop();
 })();
