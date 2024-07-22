@@ -9,10 +9,10 @@
     "node": ">=20.3.0"
   },
   "bin": {
-    "wpt-fetch": "src/scripts/fetch"
+    "wpt-fetch": "src/scripts/wpt-fetch"
   },
   "scripts": {
-    "wpt-fetch": "./src/scripts/fetch"
+    "wpt-fetch": "./src/scripts/wpt-fetch"
   },
   "dependencies": {
     "commander": "^12.1.0",
