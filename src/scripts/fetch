@@ -408,7 +408,6 @@ The default output directory is "./wpt-traces" relative to the current working d
 wpt-traces
 └── 240612_AiDcR6_9Y0
     ├── results.json
-    ├── runs-timelines.json #TODO
     └── runs
         ├── 1
         │   ├── firstView
