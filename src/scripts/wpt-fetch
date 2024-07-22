@@ -2,11 +2,11 @@
 
 /**
  * 
- * TODO: global issues still unresolved:
+ * TODO:
  * 
- *  - support for a `traces.json` input file to derive options from
- *  - support for getting keys from trace config file or env var
- *  - reasonable docs in the README
+ *  - support for downloading full filmstrips at different temporal resolutions
+ *  - support for taking traces
+ *  - support for generating SxS videos when passing multiple traces
  *  - support for different "end" params
  *    - should also ensure that we always download max images; unsure about how to handle videos
  */
