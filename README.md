@@ -1,5 +1,7 @@
 # wpt-embed
 
+<!-- TODO: embed an image of the timeline at work and/or link to demo -->
+
 Web Components for displaying WPT traces, and scripts for saving them for display in your own pages.
 
 This is designed to be a lightweight setup with zero client-side dependencies. In short, you provide a [WPT API key](https://docs.webpagetest.org/api/keys/) via environment variable, command line, or config file, and we fetch the results.
