@@ -1,7 +1,7 @@
 /**
  * TODO:
  * 
- * - rename file from `wpt-embed-filmstrip` -> `wpt-filmstrip`
+ * - :part() and theme support
  * - options to display connection and device params
  * - options to embed video, timeline, and connections
  * - sync'd scroll for timeline and connections
@@ -80,6 +80,10 @@ class WPTFilmstrip extends HTMLElement {
       * {
         outline: 1px solid blue;
       }
+    }
+
+    table {
+      border-collapse: collapse;
     }
 
     #container {
