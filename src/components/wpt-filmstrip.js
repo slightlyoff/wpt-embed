@@ -2,6 +2,9 @@
  * TODO:
  * 
  * - :part() and theme support
+ * - filmstrip styling for timeline events:
+ *    https://nooshu.com/blog/2019/10/02/how-to-read-a-wpt-waterfall-chart/#what-do-the-filmstrip-thumbnail-border-colours-signify
+ * - expose as a webc plugin for 11ty
  * - options to display connection and device params
  * - options to embed video, timeline, and connections
  * - sync'd scroll for timeline and connections
@@ -75,6 +78,13 @@ class WPTFilmstrip extends HTMLElement {
     * {
       box-sizing: border-box;
     }
+    /*
+    :host {
+      --no-change-border-color: transparent;
+      --visual-change-border-color: yellow;
+      --lcp-border-color: red;
+    }
+    */
 
     :host([debug]) {
       * {

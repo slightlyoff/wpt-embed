@@ -1,9 +1,14 @@
 {
-  "name": "wpt-embed",
+  "name": "@slightlyoff/wpt-embed",
+  "version": "0.1.0",
   "description": "Scripts and Web Components for capturing and displaying WPT traces in a blog",
   "main": "",
   "author": "Alex Russell",
-  "repository": "github:slightlyoff/wpt-embed",
+  "repository": {
+    "type": "git",
+    "url": "github:slightlyoff/wpt-embed"
+  },
+  "files": [ "src/**" ],
   "license": "MIT",
   "engines": {
     "node": ">=20.3.0"
@@ -20,5 +25,10 @@
     "ora": "^8.0.1",
     "sharp": "^0.33.4",
     "webpagetest": "^0.7.4"
-  }
+  },
+  "keywords": [
+    "web components",
+    "wpt",
+    "webpagetest"
+  ]
 }
