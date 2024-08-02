@@ -186,6 +186,16 @@ class WPTFilmstrip extends HTMLElement {
     let shadow = this.attachShadow({ mode: "open" });
   }
 
+  attributeChangedCallback(name, oldValue, newValue) {
+    if(
+      WPTFilmstrip.observedAttributes.includes(name) &&
+      oldValue !== newValue
+    ) {
+      let n = toCamelCase(name);
+      this[n] = newValue;
+    }
+  }
+
   #_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: 1 });
   #_intervalMs = 100;
   #_interval = "100";
@@ -222,6 +232,7 @@ class WPTFilmstrip extends HTMLElement {
       default:
         this.#_intervalMs = 100;
         mfd = 1;
+        break;
     }
     this.#_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: mfd });
   }
