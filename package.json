@@ -1,6 +1,6 @@
 {
   "name": "@slightlyoff/wpt-embed",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Scripts and Web Components for capturing and displaying WPT traces in a blog",
   "main": "",
   "author": "Alex Russell",

@@ -267,7 +267,7 @@ class WPTFilmstrip extends HTMLElement {
     if(!this.#wired) { return; }
     // Get the maximum duration
     let durations = this.#tests.map((t) => { return t.duration; })
-    let end = Math.max(...durations);
+    let end = Math.max(...durations) + this.#_intervalMs;
     // TODO: can this cut off the last frame?
     let timings = [];
     for(let x=0; x <= end; x+=this.#_intervalMs) {
@@ -458,34 +458,36 @@ class WPTTest extends HTMLElement {
     return document.body.lastElementChild.content;
   })();
 
-  getFrames(interval, totalDuration, frameCount) {
+  getFrames(interval, frameCount, totalDuration) {
     let framesMeta = Array.from(this.data.filmstripFrames);
     let frames = [];
     let end = this.data.visualComplete;
     let current = 0;
     let currentMeta = framesMeta.shift();
-    let nextMeta = framesMeta.shift();
+    // First frame
+    frames.push(this.getFilmstripImage(currentMeta));
     if(!currentMeta) { return; }
+    let nextMeta = currentMeta;
+    current += interval;
+    // For every intermediate frame, we either clone the last frame 
+    // if there hasn't been progress, or fast-forward to the last change 
+    // before the frame deadline.
     while(current <= end) {
-      // TODO: handle cases where initial frame isn't at 0
-      if(current > nextMeta.time) {
-        currentMeta = nextMeta;
+      let advanced = false;
+      while(nextMeta.time < current) {
         nextMeta = framesMeta.shift();
-        frames.push(this.getFilmstripImage(currentMeta));
-      } else if(!frames.length) {
+        advanced = true;
+      }
+      if(advanced) {
         frames.push(this.getFilmstripImage(currentMeta));
       } else {
-        // Make a clone, update text as appropriate
-        let c = frames.at(-1).cloneNode(true);
-        // TODO: update text
-        frames.push(c);
+        frames.push(frames.at(-1).cloneNode(true));
       }
+      currentMeta = nextMeta;
       current += interval;
     }
-    if(end < totalDuration) {
-      // TODO: Fixup colspan for last frame if needed
-      console.log(end, totalDuration, current, frameCount)
-    }
+    // Final frame
+    frames.push(this.getFilmstripImage(currentMeta));
     return frames;
   }
 
