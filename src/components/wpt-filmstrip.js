@@ -200,6 +200,10 @@ class WPTFilmstrip extends HTMLElement {
   #_intervalMs = 100;
   #_interval = "100";
   set interval(i) { 
+    let oldIntervalMS = this.#_intervalMs;
+    if(typeof i === "number") {
+      i = i.toString();
+    }
     let mfd;
     switch(i) {
       case "16":
@@ -221,7 +225,7 @@ class WPTFilmstrip extends HTMLElement {
         mfd = 0;
         break;
       case "500":
-      case "500":
+      case "500ms":
       case "0.5s":
         this.#_intervalMs = 500;
         mfd = 1; 
@@ -235,6 +239,9 @@ class WPTFilmstrip extends HTMLElement {
         break;
     }
     this.#_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: mfd });
+    if (this.#_intervalMs !== oldIntervalMS) {
+      this.updateTests();
+    }
   }
   get interval() { return this.#_interval; }
   getTimingFor(ms=0) {
@@ -252,11 +259,12 @@ class WPTFilmstrip extends HTMLElement {
   get #tests() {
     // TODO: cache
     return Array.from(this.children).filter((e) => {
-      return e.tagName === WPTTest.tagName; 
+      return e.tagName === "wpt-test";
     });
   }
 
-  updateTests(e) {
+  updateTests() {
+    if(!this.#wired) { return; }
     // Get the maximum duration
     let durations = this.#tests.map((t) => { return t.duration; })
     let end = Math.max(...durations);
@@ -439,6 +447,7 @@ class WPTTest extends HTMLElement {
   }
 
   static imgTemplate = (() => {
+    // TODO: lazy loading isn't working right in FF
     document.body.insertAdjacentHTML("beforeend", `
     <template>
       <td>
