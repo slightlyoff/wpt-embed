@@ -9,7 +9,14 @@
   </head>
   <body>
     <h2>Default</h2>
-    
+
+    <wpt-filmstrip size="large" interval="500ms">
+      <wpt-test
+        timeline="../out/240729_AiDcPE_4F2/runs/1/firstView/timeline.json"
+        label="...">
+      </wpt-test>
+    </wpt-filmstrip>
+
     <wpt-filmstrip size="small" debug>
       <wpt-test
         timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
@@ -54,6 +61,7 @@
       </wpt-test>
     </wpt-filmstrip>
 
+
     <button onclick="document.getElementById('pair-container').lastElementChild.remove();">
       remove last
     </button>
@@ -63,6 +71,5 @@
     <button onclick="document.getElementById('pair-container').setAttribute('interval', '1000ms');">
       change interval
     </button> 
-   
   </body>
 </html>

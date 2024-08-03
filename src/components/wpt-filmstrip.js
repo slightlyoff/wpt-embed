@@ -279,7 +279,6 @@ class WPTFilmstrip extends HTMLElement {
       t.renderInto(
         this.#_intervalMs, 
         timings.length, 
-        end,
         this.byId("main-table").tBodies[0]
       );
     });
@@ -417,7 +416,7 @@ class WPTTest extends HTMLElement {
     this.extract();
   }
 
-  renderInto(interval=100, frameCount, totalDuration, container) {
+  renderInto(interval=100, frameCount, container) {
     if(!this.data) { return; }
     let f;
     if(this.#fragStart) { 
@@ -440,7 +439,7 @@ class WPTTest extends HTMLElement {
     f.querySelector(".test-link").setAttribute("href", this.data.summary);
     f.querySelector(".meta").setAttribute("colspan", frameCount);
     f.querySelector(".test-name").innerText = this.data.url;
-    let frames = this.getFrames(interval, frameCount, totalDuration);
+    let frames = this.getFrames(interval, frameCount);
     f.querySelector(".filmstrip-row").replaceChildren(...frames);
     container.append(f);
     this.#extracted = null;
@@ -458,36 +457,33 @@ class WPTTest extends HTMLElement {
     return document.body.lastElementChild.content;
   })();
 
-  getFrames(interval, frameCount, totalDuration) {
+  getFrames(interval, frameCount) {
     let framesMeta = Array.from(this.data.filmstripFrames);
     let frames = [];
-    let end = this.data.visualComplete;
+
     let current = 0;
-    let currentMeta = framesMeta.shift();
-    // First frame
-    frames.push(this.getFilmstripImage(currentMeta));
-    if(!currentMeta) { return; }
-    let nextMeta = currentMeta;
-    current += interval;
-    // For every intermediate frame, we either clone the last frame 
-    // if there hasn't been progress, or fast-forward to the last change 
-    // before the frame deadline.
-    while(current <= end) {
-      let advanced = false;
-      while(nextMeta.time < current) {
-        nextMeta = framesMeta.shift();
-        advanced = true;
+
+    let advanceTo = (cutoff=0) => {
+      if(framesMeta[0].time < cutoff) {
+        while(
+          (framesMeta[0].time < cutoff) && 
+          (framesMeta[1]) && 
+          (framesMeta[1].time < cutoff)
+        ) {
+          framesMeta.shift();
+        }
       }
-      if(advanced) {
-        frames.push(this.getFilmstripImage(currentMeta));
-      } else {
-        frames.push(frames.at(-1).cloneNode(true));
-      }
-      currentMeta = nextMeta;
+      return framesMeta[0];
+    };
+
+    // TODO: allow for configuration of other sorts of end frames, e.g.
+    // `visualComplete`, `fullyLoaded`, etc.
+
+    // Walk forward
+    while(current <= (this.data.visualComplete + interval)) {
+      frames.push(this.getFilmstripImage(advanceTo(current)));
       current += interval;
     }
-    // Final frame
-    frames.push(this.getFilmstripImage(currentMeta));
     return frames;
   }
 
