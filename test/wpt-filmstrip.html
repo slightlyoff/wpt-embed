@@ -6,6 +6,11 @@
     <script type="module">
       import "../src/components/wpt-filmstrip.js";
     </script>
+    <style>
+      wpt-filmstrip::part(test-link) {
+        color: black;
+      }
+    </style>
   </head>
   <body>
     <h2>Default</h2>
@@ -20,14 +25,14 @@
     <wpt-filmstrip size="small" debug>
       <wpt-test
         timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
-        test-name="TEST">
+        label="TEST">
       </wpt-test>
     </wpt-filmstrip> 
 
     <wpt-filmstrip size="medium" interval="60fps"">
       <wpt-test
         timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
-        test-name="TEST">
+        label="TEST">
       </wpt-test>
     </wpt-filmstrip> 
    
@@ -42,7 +47,7 @@
     <wpt-filmstrip size="large" interval="100">
       <wpt-test
         timeline="../out/240612_AiDcH3_9XB/runs/3/repeatView/timeline.json"
-        test-name="TEST">
+        label="TEST">
       </wpt-test>
     </wpt-filmstrip>
 

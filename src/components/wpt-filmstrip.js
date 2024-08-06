@@ -320,9 +320,6 @@ class WPTTest extends HTMLElement {
     "timeline",
     "timeline-video",
     "aspect-ratio",
-    "size",
-    "test-name",
-    "interval",
   ];
 
   static tagName = "wpt-test";
@@ -351,6 +348,13 @@ class WPTTest extends HTMLElement {
   #_timeline = "";
   set timeline(i) { this.updateTimeline(i); }
   get timeline()  { return this.#_timeline; }
+
+  #_label = "";
+  set label(l) { 
+    this.#_label = l; 
+    this.#maybeNotify();
+  }
+  get label()  { return this.#_label; }
 
   get duration() {
     return this?.data?.visualComplete || 0;
@@ -384,8 +388,8 @@ class WPTTest extends HTMLElement {
       <tr class="meta-row">
         <td class="meta">
           <div class="labels">
-            <a class="test-link" target="_new">
-              <span class="test-name"></span>
+            <a class="test-link" target="_new" part="test-link">
+              <span class="label" part="label"></span>
             </a>
           </div>
         </td>
@@ -438,7 +442,7 @@ class WPTTest extends HTMLElement {
     this.#fragEnd = comments.shift();
     f.querySelector(".test-link").setAttribute("href", this.data.summary);
     f.querySelector(".meta").setAttribute("colspan", frameCount);
-    f.querySelector(".test-name").innerText = this.data.url;
+    f.querySelector(".label").innerText = this.label || this.data.url;
     let frames = this.getFrames(interval, frameCount);
     f.querySelector(".filmstrip-row").replaceChildren(...frames);
     container.append(f);
