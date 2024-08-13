@@ -113,7 +113,7 @@ class WPTFilmstrip extends HTMLElement {
     .filmstrip-row {
       & img {
         border: 1px solid black;
-        content-visibility: auto;
+        /* content-visibility: auto; */
       }
 
       & .pct {
@@ -485,7 +485,11 @@ class WPTTest extends HTMLElement {
 
     // Walk forward
     while(current <= (this.data.visualComplete + interval)) {
-      frames.push(this.getFilmstripImage(advanceTo(current)));
+      let i = this.getFilmstripImage(advanceTo(current));
+      if(frames.length < 5) {
+        i.querySelector("img").removeAttribute("loading");
+      }
+      frames.push(i);
       current += interval;
     }
     return frames;
