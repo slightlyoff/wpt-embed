@@ -1,6 +1,6 @@
 /**
  * TODO:
- * 
+ *
  * - :part() and theme support
  * - filmstrip styling for timeline events:
  *    https://nooshu.com/blog/2019/10/02/how-to-read-a-wpt-waterfall-chart/#what-do-the-filmstrip-thumbnail-border-colours-signify
@@ -46,10 +46,10 @@ let toCamelCase = (() => {
   return (s) => {
     let _s = _c.get(s);
     if (_s) { return _s; }
-    _s = s.replace(/(-)+([a-z]?)/g, (m, g0, g1, offset) => { 
+    _s = s.replace(/(-)+([a-z]?)/g, (m, g0, g1, offset) => {
       let c = m[m.length-1];
       if(!offset) return c;
-      return (c === "-") ? "" : c.toUpperCase(); 
+      return (c === "-") ? "" : c.toUpperCase();
     });
     _c.set(s, _s);
     return _s;
@@ -77,6 +77,9 @@ class WPTFilmstrip extends HTMLElement {
   static styles = `
     * {
       box-sizing: border-box;
+    }
+    :host {
+      --image-size: 100px;
     }
     /*
     :host {
@@ -136,26 +139,22 @@ class WPTFilmstrip extends HTMLElement {
     #timing td {
       text-align: center;
     }
-    
+
     :host([size="small"]) {
-      .filmstrip-row img {
-        width: 50px;
-        contain-intrinsic-width: 50px;
-      }
+      --image-size: 50px;
     }
 
     :host([size="medium"]) {
-      .filmstrip-row img {
-        width: 100px;
-        contain-intrinsic-width: 100px;
-      }
+      --image-size: 50px;
     }
 
     :host([size="large"]) {
-      .filmstrip-row img {
-        width: 200px;
-        contain-intrinsic-width: 200px;
-      }
+      --image-size: 200px;
+    }
+
+    .filmstrip-row img {
+      width: var(--image-size, 100px);
+      contain-intrinsic-width: var(--image-size, 100px);
     }
 
     .filmstrip-meta {
@@ -199,7 +198,7 @@ class WPTFilmstrip extends HTMLElement {
   #_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: 1 });
   #_intervalMs = 100;
   #_interval = "100";
-  set interval(i) { 
+  set interval(i) {
     let oldIntervalMS = this.#_intervalMs;
     if(typeof i === "number") {
       i = i.toString();
@@ -210,7 +209,7 @@ class WPTFilmstrip extends HTMLElement {
       case "16ms":
       case "60fps":
         this.#_intervalMs = 16;
-        mfd = 3; 
+        mfd = 3;
         break;
       case "1000":
       case "1000ms":
@@ -228,7 +227,7 @@ class WPTFilmstrip extends HTMLElement {
       case "500ms":
       case "0.5s":
         this.#_intervalMs = 500;
-        mfd = 1; 
+        mfd = 1;
         break;
       case "100":
       case "100ms":
@@ -277,8 +276,8 @@ class WPTFilmstrip extends HTMLElement {
 
     this.#tests.forEach((t) => {
       t.renderInto(
-        this.#_intervalMs, 
-        timings.length, 
+        this.#_intervalMs,
+        timings.length,
         this.byId("main-table").tBodies[0]
       );
     });
@@ -307,10 +306,10 @@ class WPTFilmstrip extends HTMLElement {
 customElements.define(WPTFilmstrip.tagName, WPTFilmstrip);
 
 /**
- * Does not renders its own Shadow DOM due to the <table> based layout, 
+ * Does not renders its own Shadow DOM due to the <table> based layout,
  * but owns data for a single timeline, loads it, and notifies the parent when
  * re-rendering is required. Must be nested inside a <wpt-filmstrip>.
- * 
+ *
  * Notifies parent on attribute changes.
  */
 class WPTTest extends HTMLElement {
@@ -337,9 +336,9 @@ class WPTTest extends HTMLElement {
 
   #connected = false;
   connectedCallback() {
-    if(this.parentNode && 
+    if(this.parentNode &&
        this.parentNode?.tagName === WPTFilmstrip.tagName) {
-        this.#connected = true; 
+        this.#connected = true;
         this.#maybeNotify();
     }
   }
@@ -350,8 +349,8 @@ class WPTTest extends HTMLElement {
   get timeline()  { return this.#_timeline; }
 
   #_label = "";
-  set label(l) { 
-    this.#_label = l; 
+  set label(l) {
+    this.#_label = l;
     this.#maybeNotify();
   }
   get label()  { return this.#_label; }
@@ -363,7 +362,7 @@ class WPTTest extends HTMLElement {
   async updateTimeline(url) {
     if( (!url) || (url === this.#_timeline)) { return; }
 
-    this.#_timeline = url; 
+    this.#_timeline = url;
     // Fetch and parse
     let r = await fetch(url);
     this.data  = await r.json();
@@ -405,7 +404,7 @@ class WPTTest extends HTMLElement {
   #fragEnd = null;
   #extracted = null;
   extract() {
-    if(this.#fragStart) { 
+    if(this.#fragStart) {
       if(this.#extracted) { return this.#extracted; }
       let r = new Range();
       r.setStartBefore(this.#fragStart);
@@ -423,20 +422,20 @@ class WPTTest extends HTMLElement {
   renderInto(interval=100, frameCount, container) {
     if(!this.data) { return; }
     let f;
-    if(this.#fragStart) { 
+    if(this.#fragStart) {
       // Remove it from wherever it is...
       f = this.extract();
-      if(!this.#dirty) { 
+      if(!this.#dirty) {
         // ...and put it back where it's supposed to go.
-        container.append(f); 
+        container.append(f);
         this.#extracted = null;
         return;
       }
     }
 
     f = WPTTest.rowTemplate.cloneNode(true);
-    let comments = Array.from(f.childNodes).filter((n) => { 
-      return n.nodeType === 8; 
+    let comments = Array.from(f.childNodes).filter((n) => {
+      return n.nodeType === 8;
     });
     this.#fragStart = comments.shift();
     this.#fragEnd = comments.shift();
@@ -470,8 +469,8 @@ class WPTTest extends HTMLElement {
     let advanceTo = (cutoff=0) => {
       if(framesMeta[0].time < cutoff) {
         while(
-          (framesMeta[0].time < cutoff) && 
-          (framesMeta[1]) && 
+          (framesMeta[0].time < cutoff) &&
+          (framesMeta[1]) &&
           (framesMeta[1].time < cutoff)
         ) {
           framesMeta.shift();
