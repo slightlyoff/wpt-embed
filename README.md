@@ -12,10 +12,10 @@ The `<wpt-filmstrip>` web component consumes the `timeline.json` file generated 
 
 ## CLI Examples
 
-First, install this package into your project via NPM (future), or via github (today):
+First, install this package into your project via NPM, or via github (today):
 
 ```console
-$ npm i https://github.com/slightlyoff/wpt-embed
+$ npm i --save @slightlyoff/wpt-embed
 ```
 
 Then run the provided script to download a previously-captured WebPageTest.org trace using your API key and the trace ID:
@@ -138,6 +138,10 @@ In `timelines.html`, we will directly reference the component script, but for pr
       interval="500ms">
       <wpt-test
         timeline="./wpt-traces/TEST_ID/runs/1/firstView/timeline.json">
+        <!-- Include a link for progressive enhancement -->
+        <a 
+          href="https://www.webpagetest.org/video/results.php?tests=TEST_ID"
+          target="_new">Test name and description</a>
       </wpt-test>
     </wpt-filmstrip>
 
@@ -148,11 +152,23 @@ In `timelines.html`, we will directly reference the component script, but for pr
       <wpt-test
         label="First View"
         timeline="./wpt-traces/TEST_ID/runs/1/firstView/timeline.json">
+        <!-- fallback link -->
+        <a 
+          href="https://www.webpagetest.org/video/compare.php?tests=TEST_ID-r:1-c:0"
+          target="_new">First view</a>
       </wpt-test>
       <wpt-test
         label="Repeat View"
         timeline="./wpt-traces/TEST_ID/runs/1/repeatView/timeline.json">
+        <!-- fallback link -->
+        <a 
+          href="https://www.webpagetest.org/video/compare.php?tests=TEST_ID-r:1-c:1"
+          target="_new">Repeat view</a>
       </wpt-test>
+      <!-- SxS -->
+      <a 
+        href="https://www.webpagetest.org/video/compare.php?tests=TEST_ID-r:1-c:0,TEST_ID-r:1-c:1"
+        target="_new">side-by-side comparison</a>
     </wpt-filmstrip>
 
     <!-- First views, 60fps large images -->
