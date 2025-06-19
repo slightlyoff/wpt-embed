@@ -187,7 +187,7 @@ let ebf = wrapEBF;
           let viewData = Object.assign({}, baseData);
           viewData.view = view;
           // Nested objects
-          ["pages", "thumbnails", "images"].forEach((o) => {
+          ["pages", "thumbnails", "images", "breakdown"].forEach((o) => {
             viewData[o] = Object.assign({}, run[view][o]);
           });
           // Direct values

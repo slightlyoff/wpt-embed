@@ -1,13 +1,17 @@
 /**
  * TODO:
  *
- * - :part() and theme support
+ * - disable filmstrip view
+ * - waterfall view & styling + :part()s
+ * - video view
+ * - image aspect ratios and content-visibility
+ * - theme support
  * - filmstrip styling for timeline events:
  *    https://nooshu.com/blog/2019/10/02/how-to-read-a-wpt-waterfall-chart/#what-do-the-filmstrip-thumbnail-border-colours-signify
  * - expose as a webc plugin for 11ty
  * - options to display connection and device params
  * - options to embed video, timeline, and connections
- * - sync'd scroll for timeline and connections
+ * - sync'd scroll for timeline and waterfall/connections
  * - "play" button?
  */
 
@@ -56,15 +60,13 @@ let toCamelCase = (() => {
   };
 })();
 
-class WPTTestRenderer {
-
-  testElement = null;
-
-  get data() {
-    return this?.testElement?.data;
-  }
-
-}
+let templateFor = (str) => {
+  document.body.insertAdjacentHTML(
+    "beforeend", 
+    `<template>${str}</template>`
+  );
+  return document.body.lastElementChild.content;
+};
 
 class WPTFilmstrip extends HTMLElement {
 
@@ -72,6 +74,11 @@ class WPTFilmstrip extends HTMLElement {
     "aspect-ratio",
     "size",
     "interval",
+    "waterfall",
+    "connections",
+    "breakdown",
+    "video",
+    "gif",
   ];
 
   static styles = `
@@ -99,10 +106,12 @@ class WPTFilmstrip extends HTMLElement {
       border-collapse: collapse;
     }
 
-    #container {
+    #scroll-container {
       overflow-x: auto;
       width: 100%;
       padding: 1em;
+      display: flex;
+      flex-direction: column;
     }
 
     #main-table {
@@ -160,22 +169,33 @@ class WPTFilmstrip extends HTMLElement {
     .filmstrip-meta {
       padding: 1em;
     }
+
+    .hidden { display: none; }
+
+    #waterfall,
+    #connections {
+      & img {
+        width: 100%;
+      }
+    }
   `;
 
-  static template = (() => {
-    document.body.insertAdjacentHTML("beforeend", `
-    <template>
-      <div id="container">
-        <table id="main-table">
-          <tbody>
-            <tr id="timing">
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </template>`);
-    return document.body.lastElementChild.content;
-  })();
+  static template = templateFor(`
+    <div id="scroll-container">
+      <table id="main-table">
+        <tbody>
+          <tr id="timing">
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="waterfall" class="hidden"></div>
+    <div id="connections" class="hidden"></div>
+    <div id="breakdown" class="hidden"></div>
+    <div id="gif" class="hidden"></div>
+    <div id="video" class="hidden"></div>
+    `
+  );
 
   static tagName = "wpt-filmstrip";
   get tagName() { return this.constructor.tagName; }
@@ -251,6 +271,50 @@ class WPTFilmstrip extends HTMLElement {
     return td;
   }
 
+  #attrToBool(value, attr) {
+    if(typeof value === "string") {
+      let lc = value.toLowerCase();
+      if(
+        (!value.length) ||
+        (lc == "true")  ||
+        (lc == attr)
+      ){ 
+        return true; 
+      }
+    }
+    return false;
+  }
+
+  #_waterfall = false;
+  set waterfall(v) {
+    this.#_waterfall = this.#attrToBool(v, "waterfall");
+    // TODO
+  }
+
+  #_connections = false;
+  set connections(v) {
+    this.#_connections = this.#attrToBool(v, "connections");
+    // TODO
+  }
+
+  #_breakdown = false;
+  set breakdown(v) {
+    this.#_breakdown = this.#attrToBool(v, "breakdown");
+    // TODO
+  }
+
+  #_video = false;
+  set video(v) {
+    this.#_video = this.#attrToBool(v, "video");
+    // TODO
+  }
+
+  #_gif = false;
+  set gif(v) {
+    this.#_gif = this.#attrToBool(v, "gif");
+    // TODO
+  }
+
   connectedCallback() {
     this.wireElements();
   }
@@ -260,6 +324,12 @@ class WPTFilmstrip extends HTMLElement {
     return Array.from(this.children).filter((e) => {
       return e.tagName === "wpt-test";
     });
+  }
+
+  #_matchHiddenState(value, el) {
+    if(typeof el === "string") { el = this.byId(el); }
+    el.classList[ !!value ? "remove" : "add" ]("hidden");
+    return el;
   }
 
   updateTests() {
@@ -275,11 +345,32 @@ class WPTFilmstrip extends HTMLElement {
     this.byId("timing").replaceChildren(...timings);
 
     this.#tests.forEach((t) => {
-      t.renderInto(
+      t.renderTimelineInto(
         this.#_intervalMs,
         timings.length,
         this.byId("main-table").tBodies[0]
       );
+
+      // TODO: DRY
+      let c = this.byId("waterfall");
+      this.#_matchHiddenState(this.#_waterfall, c);
+      if(this.#_waterfall) { t.renderWaterfallInto(c); }
+
+      c = this.byId("connections");
+      this.#_matchHiddenState(this.#_connections, c); 
+      if(this.#_connections) { t.renderConnectionsInto(c); }
+
+      c = this.byId("breakdown");
+      this.#_matchHiddenState(this.#_breakdown, c); 
+      if(this.#_breakdown) { t.renderBreakdownInto(c); }
+
+      c = this.byId("video");
+      this.#_matchHiddenState(this.#_video, c); 
+      if(this.#_video) { t.renderVideoInto(c); }
+
+      c = this.byId("gif");
+      this.#_matchHiddenState(this.#_gif, c); 
+      if(this.#_gif) { t.renderGifInto(c); }
     });
   }
 
@@ -306,7 +397,7 @@ class WPTFilmstrip extends HTMLElement {
 customElements.define(WPTFilmstrip.tagName, WPTFilmstrip);
 
 /**
- * Does not renders its own Shadow DOM due to the <table> based layout,
+ * Does not render its own Shadow DOM due to the <table> based layout,
  * but owns data for a single timeline, loads it, and notifies the parent when
  * re-rendering is required. Must be nested inside a <wpt-filmstrip>.
  *
@@ -380,25 +471,21 @@ class WPTTest extends HTMLElement {
     }
   }
 
-  static rowTemplate = (() => {
-    document.body.insertAdjacentHTML("beforeend", `
-    <template>
-      <!-- start -->
-      <tr class="meta-row">
-        <td class="meta">
-          <div class="labels">
-            <a class="test-link" target="_new" part="test-link">
-              <span class="label" part="label"></span>
-            </a>
-          </div>
-        </td>
-      </tr>
-      <tr class="filmstrip-row">
-      </tr>
-      <!-- end -->
-    </template>`);
-    return document.body.lastElementChild.content;
-  })();
+  static rowTemplate = templateFor(`
+    <!-- start -->
+    <tr class="meta-row">
+      <td class="meta">
+        <div class="labels">
+          <a class="test-link" target="_new" part="test-link">
+            <span class="label" part="label"></span>
+          </a>
+        </div>
+      </td>
+    </tr>
+    <tr class="filmstrip-row">
+    </tr>
+    <!-- end -->
+  `);
 
   #fragStart = null;
   #fragEnd = null;
@@ -419,7 +506,7 @@ class WPTTest extends HTMLElement {
     this.extract();
   }
 
-  renderInto(interval=100, frameCount, container) {
+  renderTimelineInto(interval=100, frameCount, container) {
     if(!this.data) { return; }
     let f;
     if(this.#fragStart) {
@@ -448,17 +535,97 @@ class WPTTest extends HTMLElement {
     this.#extracted = null;
   }
 
-  static imgTemplate = (() => {
-    // TODO: lazy loading isn't working right in FF
-    document.body.insertAdjacentHTML("beforeend", `
-    <template>
-      <td>
-        <img loading="lazy" decoding="async">
-        <div class="pct"></div>
-      </td>
-    </template>`);
-    return document.body.lastElementChild.content;
-  })();
+  #_timelineURL = null;
+  #relativeImgURL(path) {
+    if(!this.#_timelineURL) {
+      this.#_timelineURL = new URL(this.#_timeline, window.location);
+    }
+    return new URL(path, this.#_timelineURL);
+  }
+
+  static figureTemplate = templateFor(`
+    <figure>
+      <a>
+        <picture>
+          <img>
+        </picture>
+      </a>
+      <figcaption></figcaption>
+    </figure>
+  `);
+
+  #waterfall = null;
+  renderWaterfallInto(container) {
+    if(!this.#waterfall) {
+      container.appendChild(WPTTest.figureTemplate.cloneNode(true));
+      this.#waterfall = container.lastElementChild;
+    } else {
+      // Ensure order
+      container.appendChild(this.#waterfall);
+    }
+    if(this.data) {
+      let w = this.#waterfall;
+      console.log(w.querySelector("a"));
+      w.querySelector("a").href = this.data.summary;
+      w.querySelector("img").src = this.#relativeImgURL(this.data.waterfall);
+      // TODO: fixup innerHTML use
+      w.querySelector("figcaption").innerHTML = `${this.data.testUrl} tested from ${this.data.from}; ${this.data.view == "firstView" ? "first" : "repeat" } view`;
+    }
+  }
+
+
+  #connections = null;
+  renderConnectionsInto(container) {
+    if(!this.#connections) {
+      container.appendChild(WPTTest.figureTemplate.cloneNode(true));
+      this.#connections = container.lastElementChild;
+    } else {
+      container.appendChild(this.#connections);
+    }
+    if(this.data) {
+      let w = this.#connections;
+      console.log(w.querySelector("a"));
+      w.querySelector("a").href = this.data.summary;
+      w.querySelector("img").src = this.#relativeImgURL(this.data.connectionView);
+      w.querySelector("figcaption").textContent = `Connections and utilization. ${this.data.view == "firstView" ? "First" : "Repeat" } view, ${this.data.bwDown / 1000}/${this.data.bwUp / 1000}Mbps, ${this.data.latency}ms RTT.`;
+    }
+  }
+
+  #breakdown = null;
+  renderBreakdownInto(container) {
+    console.log("renderBreakdownInto:", container);
+    console.log(container);
+    if(!this.#breakdown) {
+      // Build the breakdown table and chart
+    }
+  }
+
+  #video = null;
+  renderVideoInto(container) {
+    console.log("renderVideoInto:", container);
+    console.log(container);
+    if(!this.#video) {
+      // Build the video
+    }
+  }
+
+  #gif = null;
+  renderGifInto(container) {
+    console.log("renderGifInto:", container);
+    console.log(container);
+    if(!this.#gif) {
+      // Build the gif
+    }
+  }
+
+
+  // TODO: lazy loading isn't working right in FF
+  static imgTemplate = templateFor(`
+    <td>
+      <img loading="lazy" decoding="async">
+      <div class="pct"></div>
+    </td>
+  `);
 
   getFrames(interval, frameCount) {
     let framesMeta = Array.from(this.data.filmstripFrames);
@@ -497,9 +664,7 @@ class WPTTest extends HTMLElement {
   getFilmstripImage(meta) {
     let fragment = WPTTest.imgTemplate.cloneNode(true);
     let i = fragment.querySelector("img");
-    let timelineSrc = new URL(this.#_timeline, window.location);
-    let src = new URL(meta.image, timelineSrc);
-    i.src = src.toString();
+    i.src = this.#relativeImgURL(meta.image);
     let d = fragment.querySelector("div");
     d.innerText = `${meta.VisuallyComplete}%`;
     return fragment.firstElementChild;
