@@ -10,12 +10,64 @@
       wpt-filmstrip::part(test-link) {
         color: black;
       }
+
+      /*
+      body {
+        timeline-scope: --scroller;
+      }
+
+      h2 {
+        position: absolute;
+        animation: rotate;
+        transform: rotate(var(--sa));
+        animation-timeline: --scroller;
+      }
+
+      @keyframes rotate {
+        from {
+          --sa: 0deg;
+        }
+        to {
+          --sa: 360deg;
+        }
+      }
+
+      #x-scroller {
+        position: relative;
+        top: 50px;
+        height: 30px;
+        max-width: 100%;
+        overflow-x: auto;
+        scroll-timeline-name: --scroller;
+        scroll-timeline-axis: x;
+      }
+
+      #wide {
+        width: 200vw;
+        height: 100%;
+        top: 0px;
+        left: 0px;
+        position: relative;
+        background-color: blue;
+        opacity: 0.3;
+      }
+      */
     </style>
   </head>
   <body>
-    <h2>Default</h2>
 
-    <wpt-filmstrip size="large" interval="500ms" 
+    <!-- 
+    <div style="position: sticky; left: 10px; top: 10px;">
+      <h2>Default</h2>
+      <div id="x-scroller">
+        <div id="wide"></div>
+      </div>
+    </div> 
+    -->
+
+    <wpt-filmstrip 
+        size="large" 
+        interval="500ms" 
         waterfall="true" 
         connections="true" 
         breakdown="true"
@@ -37,7 +89,10 @@
       </wpt-test>
     </wpt-filmstrip> 
 
-    <wpt-filmstrip size="medium" interval="60fps"">
+    <wpt-filmstrip 
+      size="medium" 
+      interval="60fps"
+      connections="true">
       <wpt-test
         timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
         label="TEST">
@@ -47,7 +102,6 @@
       </wpt-test>
     </wpt-filmstrip> 
    
-
     <wpt-filmstrip size="small" interval="500ms">
       <wpt-test
         timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
@@ -103,5 +157,6 @@
     <button onclick="document.getElementById('pair-container').setAttribute('interval', '1000ms');">
       change interval
     </button> 
+
   </body>
 </html>

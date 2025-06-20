@@ -15,6 +15,13 @@
  * - "play" button?
  */
 
+CSS.registerProperty({
+  name: "--scroll-pct",
+  syntax: "<percentage>",
+  inherits: true,
+  initialValue: "0%",
+});
+
 let _styleMap = new Map();
 let addStyles = (doc, styles) => {
   let s = _styleMap.get(styles);
@@ -82,12 +89,35 @@ class WPTFilmstrip extends HTMLElement {
   ];
 
   static styles = `
+    /*
+     * Doesn't work currently. See:
+     *
+     *    https://developer.chrome.com/docs/css-ui/css-names 
+     * 
+     * and:
+     *    https://github.com/w3c/csswg-drafts/issues/10541
+     * 
+     * CSS.registerProperty() used instead.
+     */
+    /*
+    @property --scroll-pct {
+      syntax: "<percentage>";
+      inherits: true;
+      initial-value: 0%;
+    }
+    */
+
     * {
       box-sizing: border-box;
     }
     :host {
-      --image-size: 100px;
+      timeline-scope: --filmstrip-scroller;
+
+      --image-width: 100px;
+      --progress-line-color: red;
+      --progress-line-width: 2px;
     }
+
     /*
     :host {
       --no-change-border-color: transparent;
@@ -112,20 +142,30 @@ class WPTFilmstrip extends HTMLElement {
       padding: 1em;
       display: flex;
       flex-direction: column;
+
+      scroll-timeline-axis: x;
+      scroll-timeline-name: --filmstrip-scroller;
+    }
+    :host([waterfall]),
+    :host([connections]) {
+      #scroll-container {
+        border-left: var(--progress-line-width) solid var(--progress-line-color);
+      }
     }
 
     #main-table {
-      position: sticky;
       width: 100%;
       top: 0px;
       left: 0px;
-      padding-right: 100%;
+      margin-right: calc(100%);
     }
 
     .filmstrip-row {
+      margin-right: calc(100%);
+
       & img {
         border: 1px solid black;
-        /* content-visibility: auto; */
+        content-visibility: auto;
       }
 
       & .pct {
@@ -150,20 +190,21 @@ class WPTFilmstrip extends HTMLElement {
     }
 
     :host([size="small"]) {
-      --image-size: 50px;
+      --image-width: 50px;
     }
 
     :host([size="medium"]) {
-      --image-size: 50px;
+      --image-width: 50px;
     }
 
     :host([size="large"]) {
-      --image-size: 200px;
+      --image-width: 200px;
     }
 
     .filmstrip-row img {
-      width: var(--image-size, 100px);
-      contain-intrinsic-width: var(--image-size, 100px);
+      width: var(--image-width, 100px);
+      contain-intrinsic-width: var(--image-width, 100px);
+      aspect-ratio: var(--aspect-ratio);
     }
 
     .filmstrip-meta {
@@ -172,30 +213,89 @@ class WPTFilmstrip extends HTMLElement {
 
     .hidden { display: none; }
 
+    @keyframes scrollTransform {
+      from {
+        --scroll-pct: var(--line-pct-left, 24.6%);
+      }
+      to {
+        --scroll-pct: 100%;
+      }
+    }
+
+    /*
+     * These images are all 1012px wide, with insets for legends, 
+     * resource names, and utilization (at the bottom). For our 
+     * following red line, we need to place it with offsets relative 
+     * to how the image is scaled.
+     */
+
     #waterfall,
     #connections {
-      & img {
+      & figure {
+        --natural-width: 1012px;
+        --natural-height: 207px;
+      }
+
+      overflow-x: auto;
+      width: 100%;
+
+      & picture {
         width: 100%;
+        max-width: 1012px;
+        display: inline-block;
+        position: relative;
+        contain: content;
+        margin: 0;
+        padding: 0;
+        border: 0;
+
+        & > img {
+          width: 100%;
+          max-width: 1012px;
+        }
+      }
+
+      & picture::after {
+        content: "";
+        display: block;
+        z-index: 1;
+        position: absolute;
+        display: block;
+        width: var(--progress-line-width);
+
+        /* TODO: 
+            really hate that we're animating left, but it's both simple to set up to be relative and can be set using the timeline very easily
+        */
+        left: var(--scroll-pct);
+        top: var(--line-pct-top, 37px);
+        bottom: var(--line-pct-bottom, 170px);
+
+        background-color: var(--progress-line-color);
+        opacity: 0.8;
+
+        will-change: left;
+
+        animation: scrollTransform linear;
+        animation-timeline: --filmstrip-scroller;
       }
     }
   `;
 
   static template = templateFor(`
-    <div id="scroll-container">
-      <table id="main-table">
-        <tbody>
-          <tr id="timing">
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div id="waterfall" class="hidden"></div>
-    <div id="connections" class="hidden"></div>
-    <div id="breakdown" class="hidden"></div>
-    <div id="gif" class="hidden"></div>
-    <div id="video" class="hidden"></div>
-    `
-  );
+  <div id="scroll-container">
+    <table id="main-table">
+      <tbody>
+        <tr id="timing">
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="waterfall" class="hidden"></div>
+  <div id="connections" class="hidden"></div>
+  <div id="breakdown" class="hidden"></div>
+  <div id="gif" class="hidden"></div>
+  <div id="video" class="hidden"></div>
+  `);
 
   static tagName = "wpt-filmstrip";
   get tagName() { return this.constructor.tagName; }
@@ -530,7 +630,9 @@ class WPTTest extends HTMLElement {
     f.querySelector(".meta").setAttribute("colspan", frameCount);
     f.querySelector(".label").innerText = this.label || this.data.url;
     let frames = this.getFrames(interval, frameCount);
-    f.querySelector(".filmstrip-row").replaceChildren(...frames);
+    let r = f.querySelector(".filmstrip-row");
+    r.replaceChildren(...frames);
+    r.style.setProperty("--aspect-ratio", this.data.filmstripImageAspectRatio);
     container.append(f);
     this.#extracted = null;
   }
@@ -545,7 +647,7 @@ class WPTTest extends HTMLElement {
 
   static figureTemplate = templateFor(`
     <figure>
-      <a>
+      <a target="_blank">
         <picture>
           <img>
         </picture>
@@ -554,18 +656,40 @@ class WPTTest extends HTMLElement {
     </figure>
   `);
 
+  #setupFigure(container) {
+    container.appendChild(WPTTest.figureTemplate.cloneNode(true));
+    let figure = container.lastElementChild;
+    let img = figure.querySelector("img");
+    img.addEventListener("load", (e) => {
+      let nw = img.naturalWidth;
+      let nh = img.naturalHeight;
+      // FF still doesn't support attributeStyleMap...*sigh*
+      // figure.attributeStyleMap.set("--natural-width", `${nw}px`);
+      // figure.attributeStyleMap.set("--natural-height", `${nh}px`);
+
+      figure.style.setProperty("--natural-width", `${nw}px`);
+      figure.style.setProperty("--natural-height", `${nh}px`);
+
+      // CSS calc() can't convert to percentages, so we do it here instead
+      figure.style.setProperty("--line-pct-top", `${(37 / nh).toFixed(5) * 100 }%`);
+      figure.style.setProperty("--line-pct-left", `${(250 / nw).toFixed(5) * 100 }%`);
+      figure.style.setProperty("--initial-line-pct-left", `${(250 / nw).toFixed(5) * 100 }%`);
+      figure.style.setProperty("--initial-area-pct", `${100 - ((250 / nw).toFixed(5) * 100) }%`);
+      figure.style.setProperty("--line-pct-bottom", `${(170/ nh).toFixed(5) * 100 }%`);
+    });
+    return figure;
+  }
+
   #waterfall = null;
   renderWaterfallInto(container) {
     if(!this.#waterfall) {
-      container.appendChild(WPTTest.figureTemplate.cloneNode(true));
-      this.#waterfall = container.lastElementChild;
+      this.#waterfall = this.#setupFigure(container);
     } else {
       // Ensure order
       container.appendChild(this.#waterfall);
     }
     if(this.data) {
       let w = this.#waterfall;
-      console.log(w.querySelector("a"));
       w.querySelector("a").href = this.data.summary;
       w.querySelector("img").src = this.#relativeImgURL(this.data.waterfall);
       // TODO: fixup innerHTML use
@@ -577,24 +701,22 @@ class WPTTest extends HTMLElement {
   #connections = null;
   renderConnectionsInto(container) {
     if(!this.#connections) {
-      container.appendChild(WPTTest.figureTemplate.cloneNode(true));
-      this.#connections = container.lastElementChild;
+      this.#connections = this.#setupFigure(container);
     } else {
       container.appendChild(this.#connections);
     }
     if(this.data) {
       let w = this.#connections;
-      console.log(w.querySelector("a"));
       w.querySelector("a").href = this.data.summary;
       w.querySelector("img").src = this.#relativeImgURL(this.data.connectionView);
-      w.querySelector("figcaption").textContent = `Connections and utilization. ${this.data.view == "firstView" ? "First" : "Repeat" } view, ${this.data.bwDown / 1000}/${this.data.bwUp / 1000}Mbps, ${this.data.latency}ms RTT.`;
+      w.querySelector("figcaption").textContent = `Connections and utilization. ${this.data.view == "firstView" ? "First" : "Repeat" } view, ${(this.data.bwDown / 1000).toFixed(1)}/${(this.data.bwUp / 1000).toFixed(1)}Mbps, ${this.data.latency}ms RTT.`;
     }
   }
 
   #breakdown = null;
   renderBreakdownInto(container) {
-    console.log("renderBreakdownInto:", container);
-    console.log(container);
+    // console.log("renderBreakdownInto:", container);
+    // console.log(container);
     if(!this.#breakdown) {
       // Build the breakdown table and chart
     }
@@ -602,8 +724,8 @@ class WPTTest extends HTMLElement {
 
   #video = null;
   renderVideoInto(container) {
-    console.log("renderVideoInto:", container);
-    console.log(container);
+    // console.log("renderVideoInto:", container);
+    // console.log(container);
     if(!this.#video) {
       // Build the video
     }
@@ -611,8 +733,8 @@ class WPTTest extends HTMLElement {
 
   #gif = null;
   renderGifInto(container) {
-    console.log("renderGifInto:", container);
-    console.log(container);
+    // console.log("renderGifInto:", container);
+    // console.log(container);
     if(!this.#gif) {
       // Build the gif
     }
