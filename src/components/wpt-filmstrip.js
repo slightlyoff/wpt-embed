@@ -279,6 +279,41 @@ class WPTFilmstrip extends HTMLElement {
         animation-timeline: --filmstrip-scroller;
       }
     }
+
+    #breakdown {
+      & > table {
+        min-width: 30rem;
+        border-collapse: collapse;
+        border: 1px solid #dddddd;
+        margin: 1em 0.5em;
+
+        & td, th {
+          padding: 0.5em 0.35em;
+        }
+
+        & > thead {
+          /* background-color: #f6f6f6; */
+          background-color: gainsboro;
+          text-align: center;
+        }
+        & > tbody {
+          & > tr {
+              border-bottom: 1px solid #dddddd;
+          }
+
+          & > tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+          }
+
+          & th {
+            text-align: left;
+          }
+          & td {
+            text-align: right;
+          }
+        }
+      }
+    }
   `;
 
   static template = templateFor(`
@@ -713,12 +748,64 @@ class WPTTest extends HTMLElement {
     }
   }
 
+  static breakdownTemplate = templateFor(`
+    <table part="breakdown-table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Wire Size</th>
+          <th>Uncompressed</th>
+          <th>Requests</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th></th>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  `);
   #breakdown = null;
+
+  #kbFormatter = new Intl.NumberFormat('en', {
+    style: 'unit',
+    unit: 'kilobyte',
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  });
   renderBreakdownInto(container) {
-    // console.log("renderBreakdownInto:", container);
-    // console.log(container);
-    if(!this.#breakdown) {
+    if(!this.#breakdown && this?.data?.breakdown) {
+      delete this.data.breakdown.flash;
       // Build the breakdown table and chart
+      container.appendChild(WPTTest.breakdownTemplate.cloneNode(true));
+      let bdt = this.#breakdown = container.lastElementChild;
+      let rt = bdt.querySelector("tbody > tr");
+      rt.remove();
+      // Fill the rows with data
+      let total = {
+        bytes: 0,
+        bytesUncompressed: 0,
+        requests: 0,
+      };
+      for(let [ k, v ] of Object.entries(this.data.breakdown)) {
+        if(v.bytes === 0) { continue; }
+        total.bytes += v.bytes;
+        total.bytesUncompressed += v.bytesUncompressed;
+        total.requests += v.requests;
+      }
+      this.data.breakdown.Total = total;
+      for(let [ k, v ] of Object.entries(this.data.breakdown)) {
+        if(v.bytes === 0) { continue; }
+        let r = rt.cloneNode(true);
+        r.firstElementChild.textContent = k;
+        r.children[1].textContent = this.#kbFormatter.format(v.bytes / 1000);
+        r.children[2].textContent = this.#kbFormatter.format(v.bytesUncompressed / 1000);
+        r.children[3].textContent = v["requests"];
+        bdt.tBodies[0].appendChild(r);
+      }
     }
   }
 
