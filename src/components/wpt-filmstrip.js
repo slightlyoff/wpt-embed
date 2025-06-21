@@ -2,8 +2,8 @@
  * TODO:
  *
  * - waterfall view & styling + :part()s
- * - video & gif view
  * - pie charts in breakdown
+ * - Highlight low compression ratios and large payloads
  * - CrUX data view
  * - theme support
  * - filmstrip styling for timeline events:
