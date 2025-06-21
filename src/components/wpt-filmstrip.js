@@ -1,7 +1,6 @@
 /**
  * TODO:
  *
- * - disable filmstrip view
  * - waterfall view & styling + :part()s
  * - video & gif view
  * - pie charts in breakdown
@@ -14,6 +13,14 @@
  * - sync'd scroll for timeline and waterfall/connections
  * - "play" button?
  */
+
+CSS.registerProperty({
+  name: "--scroll-pct",
+  syntax: "<percentage>",
+  inherits: true,
+  initialValue: "0%",
+});
+
 
 let attrToBool = (value, attr) => {
   let t = (typeof value);
@@ -30,13 +37,6 @@ let attrToBool = (value, attr) => {
   }
   return false;
 };
-
-CSS.registerProperty({
-  name: "--scroll-pct",
-  syntax: "<percentage>",
-  inherits: true,
-  initialValue: "0%",
-});
 
 let _styleMap = new Map();
 let addStyles = (doc, styles) => {
@@ -97,6 +97,7 @@ class WPTFilmstrip extends HTMLElement {
     "aspect-ratio",
     "size",
     "interval",
+    "filmstrip",
     "waterfall",
     "connections",
     "breakdown",
@@ -162,11 +163,14 @@ class WPTFilmstrip extends HTMLElement {
       scroll-timeline-axis: x;
       scroll-timeline-name: --filmstrip-scroller;
     }
+
+    /* TODO: elide when there's no filmstrip */
     :host([waterfall]),
     :host([connections]) {
       #scroll-container {
         border-left: var(--progress-line-width) solid var(--progress-line-color);
       }
+      #scroll-container.hidden { display: none; }
     }
 
     #main-table {
@@ -425,35 +429,46 @@ class WPTFilmstrip extends HTMLElement {
     return td;
   }
 
-  #_waterfall = false;
+  #filmstrip = true;
+  set filmstrip(v) {
+    this.#filmstrip = attrToBool(v, "filmstrip");
+  }
+  get filmstrip() { return this.#filmstrip; }
+
+  #waterfall = false;
   set waterfall(v) {
-    this.#_waterfall = attrToBool(v, "waterfall");
+    this.#waterfall = attrToBool(v, "waterfall");
     // TODO
   }
+  get waterfall() { return this.#waterfall; }
 
-  #_connections = false;
+  #connections = false;
   set connections(v) {
-    this.#_connections = attrToBool(v, "connections");
+    this.#connections = attrToBool(v, "connections");
     // TODO
   }
+  get connections() { return this.#connections; }
 
-  #_breakdown = false;
+  #breakdown = false;
   set breakdown(v) {
-    this.#_breakdown = attrToBool(v, "breakdown");
+    this.#breakdown = attrToBool(v, "breakdown");
     // TODO
   }
+  get breakdown() { return this.#breakdown; }
 
-  #_video = false;
+  #video = false;
   set video(v) {
-    this.#_video = attrToBool(v, "video");
+    this.#video = attrToBool(v, "video");
     // TODO
   }
+  get video() { return this.#video; }
 
-  #_gif = false;
+  #gif = false;
   set gif(v) {
-    this.#_gif = attrToBool(v, "gif");
+    this.#gif = attrToBool(v, "gif");
     // TODO
   }
+  get gif() { return this.#gif; }
 
   connectedCallback() {
     this.wireElements();
@@ -482,35 +497,42 @@ class WPTFilmstrip extends HTMLElement {
     for(let x=0; x <= end; x+=this.#_intervalMs) {
       timings.push(this.getTimingFor(x));
     }
-    this.byId("timing").replaceChildren(...timings);
+    if(this.filmstrip) {
+      this.byId("timing").replaceChildren(...timings);
+    }
 
     this.#tests.forEach((t) => {
-      t.renderTimelineInto(
-        this.#_intervalMs,
-        timings.length,
-        this.byId("main-table").tBodies[0]
-      );
+      if(this.filmstrip) {
+        t.renderFilmstripInto(
+          this.#_intervalMs,
+          timings.length,
+          this.byId("main-table").tBodies[0]
+        );
+      } else {
+        this.byId("main-table").classList.add("hidden");
+        this.byId("scroll-container").classList.add("hidden");
+      }
 
       // TODO: DRY
       let c = this.byId("waterfall");
-      this.#_matchHiddenState(this.#_waterfall, c);
-      if(this.#_waterfall) { t.renderWaterfallInto(c); }
+      this.#_matchHiddenState(this.waterfall, c);
+      if(this.waterfall) { t.renderWaterfallInto(c); }
 
       c = this.byId("connections");
-      this.#_matchHiddenState(this.#_connections, c); 
-      if(this.#_connections) { t.renderConnectionsInto(c); }
+      this.#_matchHiddenState(this.connections, c); 
+      if(this.connections) { t.renderConnectionsInto(c); }
 
       c = this.byId("breakdown");
-      this.#_matchHiddenState(this.#_breakdown, c); 
-      if(this.#_breakdown) { t.renderBreakdownInto(c); }
+      this.#_matchHiddenState(this.breakdown, c); 
+      if(this.breakdown) { t.renderBreakdownInto(c); }
 
       c = this.byId("video");
-      this.#_matchHiddenState(this.#_video, c); 
-      if(this.#_video) { t.renderVideoInto(c); }
+      this.#_matchHiddenState(this.video, c); 
+      if(this.video) { t.renderVideoInto(c); }
 
       c = this.byId("gif");
-      this.#_matchHiddenState(this.#_gif, c); 
-      if(this.#_gif) { t.renderGifInto(c); }
+      this.#_matchHiddenState(this.gif, c); 
+      if(this.gif) { t.renderGifInto(c); }
     });
   }
 
@@ -654,7 +676,7 @@ class WPTTest extends HTMLElement {
     this.extract();
   }
 
-  renderTimelineInto(interval=100, frameCount, container) {
+  renderFilmstripInto(interval=100, frameCount, container) {
     if(!this.data) { return; }
     let f;
     if(this.#fragStart) {
