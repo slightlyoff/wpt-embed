@@ -8,7 +8,9 @@
     "type": "git",
     "url": "github:slightlyoff/wpt-embed"
   },
-  "files": [ "src/**" ],
+  "files": [
+    "src/**"
+  ],
   "license": "MIT",
   "engines": {
     "node": ">=20.3.0"
@@ -23,8 +25,8 @@
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "ora": "^8.0.1",
-    "sharp": "^0.33.4",
-    "webpagetest": "^0.7.4"
+    "sharp": "^0.34.2",
+    "webpagetest": "^0.7.6"
   },
   "keywords": [
     "web components",

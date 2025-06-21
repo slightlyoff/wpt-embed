@@ -8,7 +8,7 @@
  *  - support for taking traces
  *  - support for generating SxS videos when passing multiple traces
  *  - support for different "end" params
- *    - should also ensure that we always download max images; unsure about how to handle videos
+ *  - should also ensure that we always download max images; unsure about how to handle videos
  */
 
 async function wait(ms=100) {
@@ -117,11 +117,14 @@ let ebf = wrapEBF;
         "mobile": null,
         "completed": null,
         "testRuns": null,
+        "CrUX": null,
       };
 
       for(let k in baseData) {
         baseData[k] = results[k];
       }
+
+      baseData.optimizedImages = opts.optimizeImages;
 
       let writeToPath = async (data, path, desc="", replace=false) => {
         try {
@@ -137,7 +140,11 @@ let ebf = wrapEBF;
         }
       };
 
-      let downloadToPath = async (url, path, desc="", replace=false, quiet=false) => {
+      let sleep = async (ms=100) => {
+        return new Promise((res) => { return setTimeout(res, ms)});
+      }
+
+      let downloadToPath = async (url, path, desc="", replace=false, quiet=false, retries=0, maxRetries=2, delay=500) => {
         try {
           if (opts.download) { throw "forcing download"; }
           await fs.stat(path);
@@ -151,8 +158,27 @@ let ebf = wrapEBF;
             !quiet && spinner[ replace ? "start" : "succeed"](
               ` Downloaded ${desc}`
             );
+            if(opts.optimizeImages) {
+              if(path.endsWith(".png") || path.endsWith(".jpg")) {
+                let avifPath = path.slice(0, -4) + ".avif";
+                // Transcode to AVIF
+                let avif = await sharp(path)
+                                    .avif({ quality: 40, effort: 4 })
+                                    .toBuffer();
+                await fs.writeFile(avifPath, avif);
+              }
+            }
           } else {
             spinner.fail(` Failed to download ${url+""}`);
+
+            retries++;
+            if(maxRetries && (maxRetries >= retries)) {
+              //  Backoff
+              let sleepFor = (2 ** retries) * delay;
+              spinner.warn(`  Retrying after ${sleepFor / 1000}s`)
+              await sleep(sleepFor);
+              return await downloadToPath(url, path, desc, replace, quiet, retries, maxRetries, delay);
+            }
           }
         }
       };
@@ -281,7 +307,16 @@ let ebf = wrapEBF;
           // Example URL for video:
           //    https://www.webpagetest.org/video/video.php?tests=240612_AiDcH3_9XB-r:1-c:0&bg=ffffff&text=222222&end=visual&format=mp4
 
-          spinner.start(` Downloading videos of ${testId}, run ${r}, ${view}`);
+          spinner.start(` Downloading video of ${testId}, run ${r}, ${view}`);
+          let timelineVideoPosterPath = join(viewDir, "poster.png");
+          let posterURL = new URL("https://www.webpagetest.org/video/poster.php");
+          posterURL.searchParams.set("tests", runStr);
+          await downloadToPath(
+            posterURL, 
+            timelineVideoPosterPath, 
+            `poster for video of ${testId}, run ${r}, ${view}`
+          );
+
           let timelineVideoPath = join(viewDir, "timeline.mp4");
           // let video = (await (ebf(wpt.createVideo, wpt)(testId)));
           let videoURL = new URL("https://www.webpagetest.org/video/video.php");
@@ -311,7 +346,7 @@ let ebf = wrapEBF;
           await downloadToPath(
             videoURL, 
             timelineVideoPath, 
-            `videos of ${testId}, run ${r}, ${view}`
+            `video of ${testId}, run ${r}, ${view}`
           );
 
           let timelineGifPath = join(viewDir, "timeline.gif");
@@ -322,7 +357,14 @@ let ebf = wrapEBF;
             `gif of ${testId}, run ${r}, ${view}`
           );
 
-          spinner.succeed(` Downloaded videos of ${testId}, run ${r}, ${view}`);
+          let gif = sharp(timelineGifPath);
+          let md = await gif.metadata();
+          let id = Object.assign({}, md);
+          delete id.delay;
+          viewData.gifImageData = id;
+          viewData.gifImageAspectRatio = `${md.width} / ${md.height}`;
+
+          spinner.succeed(` Downloaded video of ${testId}, run ${r}, ${view}`);
 
           // Write out the summary for the component to consume
           let viewDataPath = join(viewDir, "timeline.json");
@@ -361,6 +403,11 @@ let ebf = wrapEBF;
       new Option("-c, --clean", 
             "Removes existing trace results for specified trace ids from the download directory before fetching.")
             .env("WPT_CLEAN")
+    )
+    .addOption(
+      new Option("-opt, --optimize-images", 
+            "Optimize images (re-encode in AVIF)? Slower. For use with the avif='true' parameter of the <wpt-test> element.")
+            .env("WPT_OPTIMIZE")
     )
     .addOption(
       new Option("-rt, --rebuild-timelines",

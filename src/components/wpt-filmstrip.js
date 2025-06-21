@@ -3,17 +3,33 @@
  *
  * - disable filmstrip view
  * - waterfall view & styling + :part()s
- * - video view
- * - image aspect ratios and content-visibility
+ * - video & gif view
+ * - pie charts in breakdown
+ * - CrUX data view
  * - theme support
  * - filmstrip styling for timeline events:
  *    https://nooshu.com/blog/2019/10/02/how-to-read-a-wpt-waterfall-chart/#what-do-the-filmstrip-thumbnail-border-colours-signify
  * - expose as a webc plugin for 11ty
  * - options to display connection and device params
- * - options to embed video, timeline, and connections
  * - sync'd scroll for timeline and waterfall/connections
  * - "play" button?
  */
+
+let attrToBool = (value, attr) => {
+  let t = (typeof value);
+  if(t === "boolean") { return value; }
+  if(t === "string") {
+    let lc = value.toLowerCase();
+    if(
+      (!value.length) ||
+      (lc == "true")  ||
+      (lc == attr)
+    ){
+      return true;
+    }
+  }
+  return false;
+};
 
 CSS.registerProperty({
   name: "--scroll-pct",
@@ -277,6 +293,9 @@ class WPTFilmstrip extends HTMLElement {
 
         animation: scrollTransform linear;
         animation-timeline: --filmstrip-scroller;
+        /* TODO: FF fix?
+        animation-duration: 1ms;
+        */
       }
     }
 
@@ -406,47 +425,33 @@ class WPTFilmstrip extends HTMLElement {
     return td;
   }
 
-  #attrToBool(value, attr) {
-    if(typeof value === "string") {
-      let lc = value.toLowerCase();
-      if(
-        (!value.length) ||
-        (lc == "true")  ||
-        (lc == attr)
-      ){ 
-        return true; 
-      }
-    }
-    return false;
-  }
-
   #_waterfall = false;
   set waterfall(v) {
-    this.#_waterfall = this.#attrToBool(v, "waterfall");
+    this.#_waterfall = attrToBool(v, "waterfall");
     // TODO
   }
 
   #_connections = false;
   set connections(v) {
-    this.#_connections = this.#attrToBool(v, "connections");
+    this.#_connections = attrToBool(v, "connections");
     // TODO
   }
 
   #_breakdown = false;
   set breakdown(v) {
-    this.#_breakdown = this.#attrToBool(v, "breakdown");
+    this.#_breakdown = attrToBool(v, "breakdown");
     // TODO
   }
 
   #_video = false;
   set video(v) {
-    this.#_video = this.#attrToBool(v, "video");
+    this.#_video = attrToBool(v, "video");
     // TODO
   }
 
   #_gif = false;
   set gif(v) {
-    this.#_gif = this.#attrToBool(v, "gif");
+    this.#_gif = attrToBool(v, "gif");
     // TODO
   }
 
@@ -545,6 +550,7 @@ class WPTTest extends HTMLElement {
     "timeline",
     "timeline-video",
     "aspect-ratio",
+    "avif",
   ];
 
   static tagName = "wpt-test";
@@ -585,13 +591,20 @@ class WPTTest extends HTMLElement {
     return this?.data?.visualComplete || 0;
   }
 
+  #_avif = false;
+  set avif(v) {
+    this.#_avif = attrToBool(v, "avif");
+  }
+  get avif() { return this.#_avif; }
+
   async updateTimeline(url) {
     if( (!url) || (url === this.#_timeline)) { return; }
 
     this.#_timeline = url;
     // Fetch and parse
     let r = await fetch(url);
-    this.data  = await r.json();
+    this.data = await r.json();
+    this.avif = this.data.optimizedImages;
     this.#maybeNotify();
   }
 
@@ -677,6 +690,12 @@ class WPTTest extends HTMLElement {
     if(!this.#_timelineURL) {
       this.#_timelineURL = new URL(this.#_timeline, window.location);
     }
+    if(this.avif && (
+      path.endsWith(".png") ||
+      path.endsWith(".jpg")
+    )) {
+      path = path.slice(0, -4) + ".avif";
+    }
     return new URL(path, this.#_timelineURL);
   }
 
@@ -748,6 +767,8 @@ class WPTTest extends HTMLElement {
     }
   }
 
+  // TODO: implement Anna Tudor's pie charts:
+  // https://codepen.io/thebabydino/pen/XWvKjJJ
   static breakdownTemplate = templateFor(`
     <table part="breakdown-table">
       <thead>
@@ -809,21 +830,72 @@ class WPTTest extends HTMLElement {
     }
   }
 
+  #setMediaDimensions(figure, media) {
+      // TODO: wire up dimensions from:
+      //
+      // "gifImageData": {
+      //   "format": "gif",
+      //   "width": 520,
+      //   "height": 680,
+      //   "space": "srgb",
+      //   "channels": 4,
+      //   "depth": "uchar",
+      //   "isProgressive": false,
+      //   "isPalette": true,
+      //   "bitsPerSample": 8,
+      //   "paletteBitDepth": 8,
+      //   "pages": 324,
+      //   "loop": 0,
+      //   "background": { "r": 0, "g": 255, "b": 0 },
+      //   "hasProfile": false,
+      //   "hasAlpha": true,
+      //   "autoOrient": { "width": 520, "height": 680 }
+      // },
+      // "gifImageAspectRatio": "520 / 680"
+      if(!this.data) { return; }
+      let id = this.data.gifImageData;
+      figure.style.width = media.style.width = "100%";
+      media.style.maxWidth = `${id.width}px`;
+      media.style.aspectRatio = this.data.gifImageAspectRatio;
+  }
+
+  static videoTemplate = templateFor(`
+  <figure>
+    <video 
+      controls
+      preload="metadata"
+      loading="lazy">
+    </video>
+    <figcaption></figcaption>
+  </figure>
+  `);
+
   #video = null;
   renderVideoInto(container) {
-    // console.log("renderVideoInto:", container);
-    // console.log(container);
-    if(!this.#video) {
+    // TODO
+    if(!this.#video && this.data) {
       // Build the video
+      container.appendChild(WPTTest.videoTemplate.cloneNode(true));
+      let figure = this.#video = container.lastElementChild;
+      figure.setAttribute("part", "video-figure");
+      let v = figure.querySelector("video");
+      v.poster = this.#relativeImgURL("poster.png");
+      v.src = this.#relativeImgURL("timeline.mp4");
+      this.#setMediaDimensions(v, figure);
+      // TODO: set captions and alt
     }
   }
 
   #gif = null;
   renderGifInto(container) {
-    // console.log("renderGifInto:", container);
-    // console.log(container);
-    if(!this.#gif) {
+    if(!this.#gif && this.data) {
       // Build the gif
+      container.appendChild(WPTTest.figureTemplate.cloneNode(true));
+      let figure = this.#gif = container.lastElementChild;
+      figure.setAttribute("part", "gif-figure");
+      let gif = figure.querySelector("img");
+      gif.src = this.#relativeImgURL("timeline.gif");
+      this.#setMediaDimensions(gif, figure);
     }
   }
 
