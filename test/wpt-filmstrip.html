@@ -71,6 +71,7 @@
         waterfall="true" 
         connections="true" 
         breakdown="true"
+        crux="inp lcp fcp cls"
         video="true" 
         gif="true">
       <wpt-test
@@ -138,6 +139,7 @@
       style="display: block; max-width: 80%; margin: auto;"
       size="small"
       interval="500ms"
+      breakdown="true"
       id="pair-container">
       <wpt-test
         label="First View"
@@ -159,13 +161,32 @@
     </wpt-filmstrip>
 
 
-    <button onclick="document.getElementById('pair-container').lastElementChild.remove();">
+    <script>
+      let pc = document.getElementById("pair-container");
+      let last = () => {
+        return pc.querySelector("wpt-test:last-of-type");
+      }
+
+      function removeLast() {
+        last().remove();
+      }
+
+      function cloneLast() {
+        let clone = last().cloneNode(true);
+        pc.appendChild(clone);
+      }
+
+      function changeInterval() {
+        pc.setAttribute('interval', '1000ms');
+      }
+    </script>
+    <button onclick="removeLast();">
       remove last
     </button>
-    <button onclick="document.getElementById('pair-container').appendChild(document.getElementById('pair-container').lastElementChild.cloneNode(true));">
+    <button onclick="cloneLast();">
       clone last
     </button> 
-    <button onclick="document.getElementById('pair-container').setAttribute('interval', '1000ms');">
+    <button onclick="changeInterval();">
       change interval
     </button> 
 

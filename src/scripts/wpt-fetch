@@ -117,7 +117,6 @@ let ebf = wrapEBF;
         "mobile": null,
         "completed": null,
         "testRuns": null,
-        "CrUX": null,
       };
 
       for(let k in baseData) {
@@ -125,6 +124,7 @@ let ebf = wrapEBF;
       }
 
       baseData.optimizedImages = opts.optimizeImages;
+      baseData.crux = results?.runs["1"]?.firstView?.CrUX;
 
       let writeToPath = async (data, path, desc="", replace=false) => {
         try {

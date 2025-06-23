@@ -38,6 +38,21 @@ let attrToBool = (value, attr) => {
   return false;
 };
 
+let attrToList = (value, attr, def) => {
+  let lc = value.toLowerCase();
+  if( (lc === attr) || (lc === "true")) {
+    return def;
+  }
+  return value.split(/\s+/);
+}
+
+let qs = (el, sel) => {
+  return el.querySelector(sel);
+};
+let eqs = (el) => {
+  return (sel) => { return qs(el, sel); };
+}
+
 let _styleMap = new Map();
 let addStyles = (doc, styles) => {
   let s = _styleMap.get(styles);
@@ -101,6 +116,7 @@ class WPTFilmstrip extends HTMLElement {
     "waterfall",
     "connections",
     "breakdown",
+    "crux",
     "video",
     "gif",
   ];
@@ -109,6 +125,7 @@ class WPTFilmstrip extends HTMLElement {
     /* A wee reset */
     h1, h2, h3, h4, p, figure, blockquote, dl, dd {
       margin-block-end: 0;
+      margin-block-start: 0;
     }
     h1, h2, h3, h4 {
       text-wrap: balance;
@@ -149,6 +166,9 @@ class WPTFilmstrip extends HTMLElement {
       --wpt-scroll-pct: var(--wpt-line-pct-left, 24.6%);
       --wpt-line-pct-top: 37px;
       --wpt-line-pct-bottom: 170px;
+      --wpt-crux-good: rgb(12, 206, 107);
+      --wpt-crux-fair: rgb(255, 164, 0);
+      --wpt-crux-poor: rgb(255, 78, 66);
       */
 
       /* TODO:
@@ -183,6 +203,7 @@ class WPTFilmstrip extends HTMLElement {
       /* center */
       display: flex;
       justify-content: center;
+      align-items: center;
     }
 
     caption,
@@ -342,6 +363,78 @@ class WPTFilmstrip extends HTMLElement {
           }
           & td {
             text-align: right;
+          }
+        }
+      }
+    }
+
+    /**************
+     * 
+     * CrUX data
+     * 
+     ***/
+    #crux {
+      display: flex;
+      flex-direction: column;
+
+      & > .crux {
+        width: 100%;
+
+        & > .metric {
+          width: 100%;
+          margin: 2em 0;
+
+          & .title {
+            opacity: 0.7;
+          }
+
+          & .value{
+            font-weight: 900;
+            font-size: 2em;
+            line-height: 1;
+            margin: 0.2em 0;
+          }
+
+          & .pct{
+            margin: 0.2em 0;
+          }
+
+          & .good {
+            background-color: var(--wpt-crux-good, rgb(12, 206, 107));
+            color: white; /* TODO: themes & contrast */
+          }
+          & .fair {
+            background-color: var(--wpt-crux-fair, rgb(255, 164, 0));
+          }
+          & .poor {
+            background-color: var(--wpt-crux-poor, rgb(255, 78, 66));
+            color: white; /* TODO: themes & contrast */
+          }
+
+          & > ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            width: 100%;
+
+            & > li {
+              line-height: 2.2;
+              text-indent: 0.8em;
+
+            }
+          }
+
+          & > .thresholds {
+            display: flex;
+
+            & > div {
+              padding: 0.2em 0.8em;
+
+              & > .key {
+                display: inline-block;
+                width: 1.5em;
+              }
+            }
           }
         }
       }
@@ -521,35 +614,37 @@ class WPTFilmstrip extends HTMLElement {
   #waterfall = false;
   set waterfall(v) {
     this.#waterfall = attrToBool(v, "waterfall");
-    // TODO
+    // TODO, etc, etc.
   }
   get waterfall() { return this.#waterfall; }
 
   #connections = false;
   set connections(v) {
     this.#connections = attrToBool(v, "connections");
-    // TODO
   }
   get connections() { return this.#connections; }
 
   #breakdown = false;
   set breakdown(v) {
     this.#breakdown = attrToBool(v, "breakdown");
-    // TODO
   }
   get breakdown() { return this.#breakdown; }
+
+  #crux = [];
+  set crux(v) {
+    this.#crux = attrToList(v, "crux", ["inp", "lcp", "cls"]);
+  }
+  get crux() { return this.#crux; }
 
   #video = false;
   set video(v) {
     this.#video = attrToBool(v, "video");
-    // TODO
   }
   get video() { return this.#video; }
 
   #gif = false;
   set gif(v) {
     this.#gif = attrToBool(v, "gif");
-    // TODO
   }
   get gif() { return this.#gif; }
 
@@ -611,7 +706,7 @@ class WPTFilmstrip extends HTMLElement {
 
       c = this.byId("crux");
       this.#_matchHiddenState(this.crux, c); 
-      if(this.crux) { t.renderCruxInto(c); }
+      if(this.crux.length) { t.renderCruxInto(c, this.crux); }
 
       c = this.byId("video");
       this.#_matchHiddenState(this.video, c); 
@@ -747,6 +842,7 @@ class WPTTest extends HTMLElement {
   #fragStart = null;
   #fragEnd = null;
   #extracted = null;
+  // TODO: update to handle other rendered tracks
   extract() {
     if(this.#fragStart) {
       if(this.#extracted) { return this.#extracted; }
@@ -783,11 +879,12 @@ class WPTTest extends HTMLElement {
     });
     this.#fragStart = comments.shift();
     this.#fragEnd = comments.shift();
-    f.querySelector(".test-link").setAttribute("href", this.data.summary);
-    f.querySelector(".meta").setAttribute("colspan", frameCount);
-    f.querySelector(".label").innerText = this.label || this.data.url;
+    let fqs = eqs(f);
+    fqs(".test-link").setAttribute("href", this.data.summary);
+    fqs(".meta").setAttribute("colspan", frameCount);
+    fqs(".label").innerText = this.label || this.data.url;
     let frames = this.getFrames(interval, frameCount);
-    let r = f.querySelector(".filmstrip-row");
+    let r = fqs(".filmstrip-row");
     r.replaceChildren(...frames);
     r.style.setProperty("--wpt-aspect-ratio", this.data.filmstripImageAspectRatio);
     container.append(f);
@@ -824,7 +921,7 @@ class WPTTest extends HTMLElement {
     let figure = container.lastElementChild;
     if(name) { figure.setAttribute("part", name); }
     if(timeline) {
-      let img = figure.querySelector("img");
+      let img = qs(figure, "img");
       img.addEventListener("load", (e) => {
         let nw = img.naturalWidth;
         let nh = img.naturalHeight;
@@ -859,7 +956,7 @@ class WPTTest extends HTMLElement {
 
   #summary = "";
   get summary() {
-    if(!this.#summary && this.data) {
+    if(this.#summary && this.data) {
       // TODO: cleanup on the collection side too
       let from = this.data.from
                      .replaceAll("<b>", "")
@@ -882,27 +979,26 @@ class WPTTest extends HTMLElement {
       container.appendChild(this.#waterfall);
     }
     if(this.data) {
-      let w = this.#waterfall;
-      w.querySelector("a").href = this.data.summary;
-      w.querySelector("img").src = this.#relativeImgURL(this.data.waterfall);
-      w.querySelector("figcaption").innerText = this.summary; 
+      let wqs = eqs(this.#waterfall);
+      wqs("a").href = this.data.summary;
+      wqs("img").src = this.#relativeImgURL(this.data.waterfall);
+      wqs("figcaption").innerText = this.summary; 
     }
   }
 
 
   #connections = null;
   renderConnectionsInto(container) {
-    if(!this.#connections) {
-      this.#connections = this.#setupFigure(container, "container-figure", true);
-    } else {
+    if(this.#connections) {
       container.appendChild(this.#connections);
+      return;
     }
-    if(this.data) {
-      let w = this.#connections;
-      w.querySelector("a").href = this.data.summary;
-      w.querySelector("img").src = this.#relativeImgURL(this.data.connectionView);
-      w.querySelector("figcaption").textContent = `Connections and utilization. ${this.data.view == "firstView" ? "First" : "Repeat" } view, ${(this.data.bwDown / 1000).toFixed(1)}/${(this.data.bwUp / 1000).toFixed(1)}Mbps, ${this.data.latency}ms RTT.`;
-    }
+    if(!this.data) { return; }
+    let w = this.#connections = this.#setupFigure(container, "container-figure", true);
+    qs(w, "a").href = this.data.summary;
+    qs(w, "img").src = this.#relativeImgURL(this.data.connectionView);
+    // TODO: factor out
+    qs(w, "figcaption").textContent = `Connections and utilization. ${this.data.view == "firstView" ? "First" : "Repeat" } view, ${(this.data.bwDown / 1000).toFixed(1)}/${(this.data.bwUp / 1000).toFixed(1)}Mbps, ${this.data.latency}ms RTT.`;
   }
 
   // TODO: implement Anna Tudor's pie charts:
@@ -928,51 +1024,185 @@ class WPTTest extends HTMLElement {
       </tbody>
     </table>
   `);
-  #breakdown = null;
-
   #kbFormatter = new Intl.NumberFormat('en', {
     style: 'unit',
     unit: 'kilobyte',
     maximumFractionDigits: 0,
     minimumFractionDigits: 0,
   });
+
+  #breakdown = null;
   renderBreakdownInto(container) {
-    if(!this.#breakdown && this?.data?.breakdown) {
-      delete this.data.breakdown.flash;
-      // Build the breakdown table and chart
-      container.appendChild(WPTTest.breakdownTemplate.cloneNode(true));
-      let bdt = this.#breakdown = container.lastElementChild;
+    if(this.#breakdown || !(this?.data?.breakdown)) { return; }
 
-      // Caption
-      let c = bdt.querySelector("caption");
-      c.textContent = `${this.location}, ${this.view} view`;
+    delete this.data.breakdown.flash;
+    // Build the breakdown table and chart
+    container.appendChild(WPTTest.breakdownTemplate.cloneNode(true));
+    let bdt = this.#breakdown = container.lastElementChild;
 
-      // Fill the rows with data
-      let rt = bdt.querySelector("tbody > tr");
-      rt.remove();
-      let total = {
-        bytes: 0,
-        bytesUncompressed: 0,
-        requests: 0,
-      };
-      for(let [ k, v ] of Object.entries(this.data.breakdown)) {
-        if(v.bytes === 0) { continue; }
-        total.bytes += v.bytes;
-        total.bytesUncompressed += v.bytesUncompressed;
-        total.requests += v.requests;
-      }
-      this.data.breakdown.Total = total;
-      for(let [ k, v ] of Object.entries(this.data.breakdown)) {
-        if(v.bytes === 0) { continue; }
-        let r = rt.cloneNode(true);
-        r.firstElementChild.textContent = k;
-        r.children[1].textContent = this.#kbFormatter.format(v.bytes / 1000);
-        r.children[2].textContent = this.#kbFormatter.format(v.bytesUncompressed / 1000);
-        r.children[3].textContent = v["requests"];
-        bdt.tBodies[0].appendChild(r);
-      }
+    // Caption
+    let c = qs(bdt, "caption");
+    c.textContent = `${this.location}, ${this.view} view`;
+
+    // Fill the rows with data
+    let rt = qs(bdt, "tbody > tr");
+    rt.remove();
+    let total = {
+      bytes: 0,
+      bytesUncompressed: 0,
+      requests: 0,
+    };
+    for(let [ k, v ] of Object.entries(this.data.breakdown)) {
+      if(v.bytes === 0) { continue; }
+      total.bytes += v.bytes;
+      total.bytesUncompressed += v.bytesUncompressed;
+      total.requests += v.requests;
+    }
+    this.data.breakdown.Total = total;
+    for(let [ k, v ] of Object.entries(this.data.breakdown)) {
+      if(v.bytes === 0) { continue; }
+      let r = rt.cloneNode(true);
+      r.firstElementChild.textContent = k;
+      r.children[1].textContent = this.#kbFormatter.format(v.bytes / 1000);
+      r.children[2].textContent = this.#kbFormatter.format(v.bytesUncompressed / 1000);
+      r.children[3].textContent = v["requests"];
+      bdt.tBodies[0].appendChild(r);
     }
   }
+
+  static cruxTemplate = templateFor(`
+  <div class="crux">
+    <div class="metric">
+      <h4 class="title"></h3>
+      <p class="value"></p>
+      <p class="pct">At 75th percentile of visits</p>
+      <ul></ul>
+      <div class="thresholds">
+        <div>
+          <span class="key good">&nbsp;</span>
+          Good
+          (&lt; <span class="goodValue"></span>)
+        </div>
+        <div>
+          <span class="key fair">&nbsp;</span>
+          Fair
+        </div>
+        <div>
+          <span class="key poor">&nbsp;</span>
+          Poor
+          (&#8805; <span class="poorValue"></span>)
+        </div>
+      </div>
+    </div>
+  </div>
+  `);
+
+  #metrics = {
+    "fcp": {
+      name: "first_contentful_paint",
+      title: "First Contentful Paint",
+    },
+    "lcp": {
+      name: "largest_contentful_paint",
+      title: "Largest Contentful Paint",
+    },
+    "inp": {
+      name: "interaction_to_next_paint",
+      title: "Interaction to Next Paint",
+    },
+    "cls": {
+      name: "cumulative_layout_shift",
+      title: "Cumulative Layout Shift",
+      unitless: true,
+    },
+    "ttfb": {
+      // TODO: Handle non-experimental?
+      name: "experimental_time_to_first_byte",
+      title: "Time to First byte",
+    },
+    // Not adding FID
+  };
+
+  #states = ["good", "fair", "poor"];
+
+  #crux = null;
+  renderCruxInto(container, metrics=["inp", "lcp", "cls"]) {
+    if(this.#crux || !(this?.data?.crux)) { return; }
+    container.appendChild(WPTTest.cruxTemplate.cloneNode(true));
+    let ct = this.#crux = container.lastElementChild;
+    let metricTemplate = qs(ct, ".metric");
+    metricTemplate.remove();
+    let cd = this.data.crux; 
+    // let url = cd.key.url;
+    // let isMobile = (cd.key.formFactor == "PHONE");
+    for(let tla of metrics) {
+      let v = this.#metrics[tla];
+      if(!v){ continue; }
+
+      /*
+      if(tla === "rtt") {
+        // TODO
+      }
+      if(tla === "traffic") {
+        // TODO
+      }
+      */
+
+      let md = cd.metrics[v.name];
+      let m = metricTemplate.cloneNode(true);
+      qs(m, ".title").textContent = 
+          `${v.title} (${tla.toUpperCase()})`;
+      let value = md.percentiles.p75;
+      let formatted = value;
+      let formattedGood = md.histogram[0].end;
+      let formattedPoor = md.histogram[2].start;
+      if(!v.unitless) {
+        formatted = `${value / 1000}s`;
+        formattedGood = `${formattedGood / 1000}s`;
+        formattedPoor = `${formattedPoor / 1000}s`;
+      }
+      let judgement = "good";
+      if(value > md.histogram[1].end) {
+        judgement = "poor";
+      } else if(value > md.histogram[0].end) {
+        judgement = "fair";
+      } 
+      qs(m, ".value").textContent = `${formatted} (${judgement})`;
+      // TODO: color the text
+      // qs(m, ".value").classList.add(judgement);
+
+      // TODO: put marker on the chart at correct location
+
+      let list = qs(m, "ul");     
+      this.#states.forEach((n, i) => {
+        let pct = parseInt(md.histogram[i].density * 100) + "%";
+        let li = document.createElement("li");
+        li.textContent = pct;
+        li.style.flexBasis = pct;
+        li.classList.add(n);
+        list.appendChild(li);
+      });
+
+      qs(m, ".goodValue").textContent = formattedGood;
+      qs(m, ".poorValue").textContent = formattedPoor;
+
+      ct.appendChild(m);
+    }
+
+    let fd = cd.collectionPeriod.firstDate;
+    let ld = cd.collectionPeriod.lastDate;
+    let startDate = new Date(`${fd.year}-${fd.month}-${fd.day}`);
+    let endDate = new Date(`${ld.year}-${ld.month}-${ld.day}`);
+    let formatOpts = { 
+      year: "numeric", 
+      month: "long", 
+      day: "numeric"
+    };
+    // new ....toLocaleDateString("en", )
+    console.log(startDate.toLocaleDateString("en", formatOpts));
+    console.log(endDate.toLocaleDateString("en", formatOpts));
+  }
+
 
   #setMediaDimensions(figure, media) {
       // TODO: wire up dimensions from:
@@ -1009,28 +1239,23 @@ class WPTTest extends HTMLElement {
 
   #video = null;
   renderVideoInto(container) {
-    // TODO
-    if(!this.#video && this.data) {
-      // Build the video
-      container.appendChild(WPTTest.videoTemplate.cloneNode(true));
-      let figure = this.#video = container.lastElementChild;
-      let v = figure.querySelector("video");
-      v.poster = this.#relativeImgURL("poster.png");
-      v.src = this.#relativeImgURL("timeline.mp4");
-      this.#setMediaDimensions(v, figure);
-      // TODO: set captions and alt
-    }
+    if(this.#video || !this.data) { return; }
+    container.appendChild(WPTTest.videoTemplate.cloneNode(true));
+    let figure = this.#video = container.lastElementChild;
+    let v = figure.querySelector("video");
+    v.poster = this.#relativeImgURL("poster.png");
+    v.src = this.#relativeImgURL("timeline.mp4");
+    this.#setMediaDimensions(v, figure);
+    // TODO: set captions and alt
   }
 
   #gif = null;
   renderGifInto(container) {
-    if(!this.#gif && this.data) {
-      // Build the gif
-      let figure = this.#gif = this.#setupFigure(container, "gif-figure");
-      let gif = figure.querySelector("img");
-      gif.src = this.#relativeImgURL("timeline.gif");
-      this.#setMediaDimensions(gif, figure);
-    }
+    if(this.#gif || !this.data) { return; }
+    let figure = this.#gif = this.#setupFigure(container, "gif-figure");
+    let gif = figure.querySelector("img");
+    gif.src = this.#relativeImgURL("timeline.gif");
+    this.#setMediaDimensions(gif, figure);
   }
 
 
