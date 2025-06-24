@@ -3,8 +3,9 @@
  *
  * - waterfall view & styling + :part()s
  * - pie charts in breakdown
+ * - inline data support
+ * - support an `order` attribute
  * - Highlight low compression ratios and large payloads
- * - CrUX data view
  * - theme support
  * - filmstrip styling for timeline events:
  *    https://nooshu.com/blog/2019/10/02/how-to-read-a-wpt-waterfall-chart/#what-do-the-filmstrip-thumbnail-border-colours-signify
@@ -1072,6 +1073,8 @@ class WPTTest extends HTMLElement {
 
   static cruxTemplate = templateFor(`
   <div class="crux">
+    <!-- <h3 class="summary"></h3> -->
+    <h3 class="details"></h3>
     <div class="metric">
       <h4 class="title"></h3>
       <p class="value"></p>
@@ -1134,7 +1137,6 @@ class WPTTest extends HTMLElement {
     metricTemplate.remove();
     let cd = this.data.crux; 
     // let url = cd.key.url;
-    // let isMobile = (cd.key.formFactor == "PHONE");
     for(let tla of metrics) {
       let v = this.#metrics[tla];
       if(!v){ continue; }
@@ -1191,16 +1193,18 @@ class WPTTest extends HTMLElement {
 
     let fd = cd.collectionPeriod.firstDate;
     let ld = cd.collectionPeriod.lastDate;
-    let startDate = new Date(`${fd.year}-${fd.month}-${fd.day}`);
-    let endDate = new Date(`${ld.year}-${ld.month}-${ld.day}`);
     let formatOpts = { 
       year: "numeric", 
       month: "long", 
       day: "numeric"
     };
+    let startDate = (new Date(`${fd.year}-${fd.month}-${fd.day}`))
+                      .toLocaleDateString("en", formatOpts);
+    let endDate = (new Date(`${ld.year}-${ld.month}-${ld.day}`))
+                      .toLocaleDateString("en", formatOpts);
     // new ....toLocaleDateString("en", )
-    console.log(startDate.toLocaleDateString("en", formatOpts));
-    console.log(endDate.toLocaleDateString("en", formatOpts));
+    let isMobile = (cd.key.formFactor == "PHONE");
+    qs(ct, ".details").textContent = `Web Vitals data for Chrome ${ isMobile ? "mobile" : "desktop" } users from ${startDate} to ${endDate}`;
   }
 
 
