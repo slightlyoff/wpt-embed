@@ -170,6 +170,7 @@ class WPTFilmstrip extends HTMLElement {
       --wpt-crux-good: rgb(12, 206, 107);
       --wpt-crux-fair: rgb(255, 164, 0);
       --wpt-crux-poor: rgb(255, 78, 66);
+      --wpt-breakdown-even-color: ...
       */
 
       /* TODO:
@@ -204,7 +205,7 @@ class WPTFilmstrip extends HTMLElement {
       /* center */
       display: flex;
       justify-content: center;
-      align-items: center;
+      gap: 1rem;
     }
 
     caption,
@@ -230,8 +231,9 @@ class WPTFilmstrip extends HTMLElement {
     
     #scroll-container {
       overflow-x: auto;
-      display: flex;
-      flex-direction: column;
+      display: block;
+      position: relative;
+      scrollbar-gutter: stable;
 
       scroll-timeline-axis: x;
       scroll-timeline-name: --wpt-filmstrip-scroller;
@@ -250,11 +252,12 @@ class WPTFilmstrip extends HTMLElement {
       width: 100%;
       top: 0px;
       left: 0px;
+      /* TODO: not working in FF */
       margin-right: calc(100%);
     }
 
     .filmstrip-row {
-      margin-right: calc(100%);
+      width: 100%;
 
       & img {
         border: 1px solid black;
@@ -312,7 +315,7 @@ class WPTFilmstrip extends HTMLElement {
 
     @keyframes scrollTransform {
       from {
-        --wpt-scroll-pct: var(--wpt-line-pct-left, 24.6%);
+        --wpt-scroll-pct: 0%;
       }
       to {
         --wpt-scroll-pct: 100%;
@@ -326,8 +329,6 @@ class WPTFilmstrip extends HTMLElement {
      ***/
 
     #breakdown {
-      /* center */
-      display: flex;
 
       & > table {
         min-width: 20rem;
@@ -346,9 +347,9 @@ class WPTFilmstrip extends HTMLElement {
         }
 
         & > thead {
-          /* background-color: #f6f6f6; */
           background-color: gainsboro;
           text-align: center;
+          color: var(--wpt-breakdown-even-color, inherit);
         }
         & > tbody {
           & > tr {
@@ -357,6 +358,7 @@ class WPTFilmstrip extends HTMLElement {
 
           & > tr:nth-of-type(even) {
             background-color: #f3f3f3;
+            color: var(--wpt-breakdown-even-color, inherit);
           }
 
           & th {
@@ -375,7 +377,6 @@ class WPTFilmstrip extends HTMLElement {
      * 
      ***/
     #crux {
-      display: flex;
       flex-direction: column;
 
       & > .crux {
@@ -456,8 +457,10 @@ class WPTFilmstrip extends HTMLElement {
 
     #waterfall,
     #connections {
+      align-items: inherit;
       overflow-x: auto;
       width: 100%;
+      --wpt-start-stop: 0.24;
 
       & picture {
         width: 100%;
@@ -468,6 +471,10 @@ class WPTFilmstrip extends HTMLElement {
         margin: 0;
         padding: 0;
         border: 0;
+
+        --es-tl: var(--wpt-test-length);
+        --es-lt: var(--wpt-longest-test, 1);
+        --wpt-end-stop: calc(var(--es-tl) / var(--es-lt) * 100%);
 
         & > img {
           width: 100%;
@@ -496,11 +503,13 @@ class WPTFilmstrip extends HTMLElement {
 
         will-change: left;
 
+        /*
+        animation-name: scrollTransform;
         animation: scrollTransform linear;
-        animation-timeline: --wpt-filmstrip-scroller;
-        /* TODO: FF fix?
-        animation-duration: 1ms;
         */
+
+        animation: scrollTransform linear(0, var(--wpt-start-stop) 0%, 1 var(--wpt-end-stop) 90%);
+        animation-timeline: --wpt-filmstrip-scroller;
       }
     }
 
@@ -680,12 +689,22 @@ class WPTFilmstrip extends HTMLElement {
       this.byId("timing").replaceChildren(...timings);
     }
 
+    var longest = 0;
+    for(let t of this.#tests) {
+      let len = t?.data?.fullyLoaded || 0;
+      if(len > longest) {
+        longest = len;
+      }
+    }
+    let ctr = this.byId("main-table").tBodies[0];
+    this.style.setProperty("--wpt-longest-test", longest);
+
     this.#tests.forEach((t) => {
       if(this.filmstrip) {
         t.renderFilmstripInto(
           this.#_intervalMs,
           timings.length,
-          this.byId("main-table").tBodies[0]
+          ctr
         );
       } else {
         this.byId("main-table").classList.add("hidden");
@@ -761,6 +780,10 @@ class WPTTest extends HTMLElement {
   static tagName = "wpt-test";
   get tagName() { return this.constructor.tagName; }
 
+  constructor() {
+    super();
+  }
+
   #dirty = false;
   #maybeNotify() {
     this.#dirty = true;
@@ -793,7 +816,7 @@ class WPTTest extends HTMLElement {
   get label()  { return this.#_label; }
 
   get duration() {
-    return this?.data?.visualComplete || 0;
+    return this?.data?.fullyLoaded || 0;
   }
 
   #_avif = false;
@@ -929,9 +952,9 @@ class WPTTest extends HTMLElement {
 
         // CSS calc() can't convert to percentages, so we do it here instead
         figure.style.setProperty("--wpt-line-pct-top", `${(37 / nh).toFixed(5) * 100 }%`);
-        figure.style.setProperty("--wpt-line-pct-left", `${(250 / nw).toFixed(5) * 100 }%`);
-        figure.style.setProperty("--wpt-initial-line-pct-left", `${(250 / nw).toFixed(5) * 100 }%`);
-        figure.style.setProperty("--wpt-initial-area-pct", `${100 - ((250 / nw).toFixed(5) * 100) }%`);
+
+        figure.style.setProperty("--wpt-start-stop", `${(250 / nw).toFixed(5)}`);
+
         figure.style.setProperty("--wpt-line-pct-bottom", `${(170/ nh).toFixed(5) * 100 }%`);
       });
     }
@@ -984,6 +1007,7 @@ class WPTTest extends HTMLElement {
       wqs("a").href = this.data.summary;
       wqs("img").src = this.#relativeImgURL(this.data.waterfall);
       wqs("figcaption").innerText = this.summary; 
+      this.#waterfall.style.setProperty("--wpt-test-length", this?.data?.fullyLoaded);
     }
   }
 
@@ -1000,6 +1024,7 @@ class WPTTest extends HTMLElement {
     qs(w, "img").src = this.#relativeImgURL(this.data.connectionView);
     // TODO: factor out
     qs(w, "figcaption").textContent = `Connections and utilization. ${this.data.view == "firstView" ? "First" : "Repeat" } view, ${(this.data.bwDown / 1000).toFixed(1)}/${(this.data.bwUp / 1000).toFixed(1)}Mbps, ${this.data.latency}ms RTT.`;
+      this.#connections.style.setProperty("--wpt-test-length", this?.data?.fullyLoaded);
   }
 
   // TODO: implement Anna Tudor's pie charts:
@@ -1294,7 +1319,8 @@ class WPTTest extends HTMLElement {
     // `visualComplete`, `fullyLoaded`, etc.
 
     // Walk forward
-    while(current <= (this.data.visualComplete + interval)) {
+    // while(current <= (this.data.visualComplete + interval)) {
+    while(current <= (this.data.fullyLoaded + interval)) {
       let i = this.getFilmstripImage(advanceTo(current));
       if(frames.length < 5) {
         i.querySelector("img").removeAttribute("loading");
@@ -1312,10 +1338,6 @@ class WPTTest extends HTMLElement {
     let d = fragment.querySelector("div");
     d.innerText = `${meta.VisuallyComplete}%`;
     return fragment.firstElementChild;
-  }
-
-  constructor() {
-    super();
   }
 
 }

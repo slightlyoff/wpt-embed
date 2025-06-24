@@ -94,6 +94,10 @@ let ebf = wrapEBF;
         let options = { breakDown: true };
         spinner.start(` Downloading results for test ${testId}`);
         results = (await (ebf(wpt.getTestResults, wpt)(testId, options)))?.data;
+        if(results?.statusCode === 400) {
+          spinner.fail(`  No results for ${testId}, server returned 400 status`);
+          continue;
+        }
         await fs.writeFile(
           resultsPath, 
           JSON.stringify(results, null, indent)

@@ -67,7 +67,7 @@
 
     <wpt-filmstrip 
         size="large" 
-        interval="500ms" 
+        interval="100ms"
         waterfall="true" 
         connections="true" 
         breakdown="true"
@@ -75,28 +75,55 @@
         video="true" 
         gif="true">
       <wpt-test
-        timeline="../out/240729_AiDcPE_4F2/runs/1/firstView/timeline.json"
+        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
         label="Dummy test with AVIF images and all data">
       </wpt-test>
+    </wpt-filmstrip> 
+
+    <wpt-filmstrip 
+      style="display: block; max-width: 80%; margin: auto;"
+      size="small"
+      interval="100ms"
+      breakdown="true"
+      waterfall="true"
+      id="pair-container">
+      <wpt-test
+        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
+        label="infrequently.org, first load">
+        <a 
+          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+          target="_new">infrequently.org, first load</a>
+      </wpt-test>
+      <wpt-test
+        timeline="../out/250624_YiDc0Q_2R1/runs/2/firstView/timeline.json"
+        label="bsky.app, first load">
+        <a 
+          href="https://www.webpagetest.org/results.php?test=250624_YiDc0Q_2R1"
+          target="_new">bsky.app, first load</a>
+      </wpt-test>
+      <a 
+        href="https://www.webpagetest.org/video/compare.php?tests=250624_ZiDcA4_2T7-r:3-c:0,250624_YiDc0Q_2R1-r:3-c:0"
+        target="_new">side-by-side view</a>
     </wpt-filmstrip>
 
     <!-- Just connections and breakdown -->
-    <wpt-filmstrip 
+
+    <!-- <wpt-filmstrip 
         filmstrip="false" 
         connections="true" 
         breakdown="true">
       <wpt-test
-        timeline="../out/240729_AiDcPE_4F2/runs/1/firstView/timeline.json"
+        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
         label="Dummy test with AVIF images and all data">
       </wpt-test>
     </wpt-filmstrip>
     <wpt-filmstrip size="small" debug>
       <wpt-test
-        timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
+        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
         label="TEST">
         <a 
-          href="https://www.webpagetest.org/results.php?test=240612_AiDcR6_9Y0"
-          target="_new">BenefitsCal, first load</a>
+          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+          target="_new">infrequently.org, first load</a>
       </wpt-test>
     </wpt-filmstrip> 
 
@@ -106,32 +133,32 @@
       connections="true"
       breakdown="true">
       <wpt-test
-        timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
+        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
         label="TEST">
         <a 
-          href="https://www.webpagetest.org/results.php?test=240612_AiDcR6_9Y0"
-          target="_new">BenefitsCal, first load</a>
+          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+          target="_new">infrequently.org, first load</a>
       </wpt-test>
     </wpt-filmstrip> 
    
-    <wpt-filmstrip size="small" interval="500ms">
+    <wpt-filmstrip size="small" interval="100ms">
       <wpt-test
-        timeline="../out/240612_AiDcR6_9Y0/runs/1/firstView/timeline.json"
-        label="BenefitsCal, first load, Pixel 5">
+        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
+        label="infrequently.org, first load">
         <a 
-          href="https://www.webpagetest.org/results.php?test=240612_AiDcR6_9Y0"
-          target="_new">BenefitsCal, first load, Pixel 5</a>
+          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+          target="_new">infrequently.org, first load</a>
       </wpt-test>
     </wpt-filmstrip>
 
     
     <wpt-filmstrip size="large" interval="100">
       <wpt-test
-        timeline="../out/240612_AiDcH3_9XB/runs/3/repeatView/timeline.json"
-        label="TEST">
+        timeline="../out/250624_ZiDcA4_2T7/runs/3/firstView/timeline.json"
+        label="infrequently.org, first load, run 3">
         <a 
-          href="https://www.webpagetest.org/video/compare.php?tests=240612_AiDcH3_9XB-r:3-c:0"
-          target="_new">BenefitsCal, first load, run 3</a>
+          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+          target="_new">infrequently.org, first load, run 3</a>
       </wpt-test>
     </wpt-filmstrip>
 
@@ -142,23 +169,23 @@
       breakdown="true"
       id="pair-container">
       <wpt-test
-        label="First View"
-        timeline="../out/240612_AiDcH3_9XB/runs/3/firstView/timeline.json">
+        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
+        label="infrequently.org, first load">
         <a 
-          href="https://www.webpagetest.org/video/compare.php?tests=240612_AiDcH3_9XB-r:3-c:0"
-          target="_new">BenefitsCal, first view</a>
+          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+          target="_new">infrequently.org, first load</a>
       </wpt-test>
       <wpt-test
-        label="Repeat View"
-        timeline="../out/240612_AiDcH3_9XB/runs/3/repeatView/timeline.json">
+        timeline="../out/250624_ZiDcA4_2T7/runs/1/repeatView/timeline.json"
+        label="infrequently.org, repeat view">
         <a 
-          href="https://www.webpagetest.org/video/compare.php?tests=240612_AiDcH3_9XB-r:3-c:1"
-          target="_new">repeat view</a>
+          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+          target="_new">infrequently.org, repeat view</a>
       </wpt-test>
       <a 
-        href="https://www.webpagetest.org/video/compare.php?tests=240612_AiDcH3_9XB-r:3-c:0,240612_AiDcH3_9XB-r:3-c:1"
+        href="https://www.webpagetest.org/video/compare.php?tests=250624_ZiDcA4_2T7-r:3-c:0,250624_ZiDcA4_2T7-r:3-c:1"
         target="_new">,side-by-side view</a>
-    </wpt-filmstrip>
+    </wpt-filmstrip> -->
 
 
     <script>
