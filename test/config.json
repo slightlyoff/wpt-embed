@@ -1,8 +1,11 @@
 {
   "key": "YOUR_KEY_HERE",
-  "ids": ["250624_ZiDcA4_2T7", "250624_YiDc0Q_2R1"],
+  "ids": [
+    "250624_ZiDcA4_2T7", "250624_YiDc0Q_2R1", "250624_ZiDcQX_7GN"
+  ],
   "output": "./out",
   "rebuildTimelines": true,
   "optimizeImages": true,
-  "prettyPrint": true
+  "prettyPrint": true,
+  "quiet": false
 }

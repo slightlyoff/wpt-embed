@@ -1,6 +1,6 @@
 {
   "name": "@slightlyoff/wpt-embed",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Scripts and Web Components for capturing and displaying WPT traces in a blog",
   "main": "",
   "author": "Alex Russell",
@@ -19,7 +19,8 @@
     "wpt-fetch": "src/scripts/wpt-fetch"
   },
   "scripts": {
-    "wpt-fetch": "./src/scripts/wpt-fetch"
+    "wpt-fetch": "./src/scripts/wpt-fetch",
+    "wpt-fetch-examples": "./src/scripts/wpt-fetch -j ./test/config.json"
   },
   "dependencies": {
     "commander": "^12.1.0",

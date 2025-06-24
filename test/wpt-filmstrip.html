@@ -75,7 +75,7 @@
         video="true" 
         gif="true">
       <wpt-test
-        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
+        timeline="../out/250624_ZiDcQX_7GN/runs/1/firstView/timeline.json"
         label="Dummy test with AVIF images and all data">
       </wpt-test>
     </wpt-filmstrip> 
@@ -85,21 +85,24 @@
       size="small"
       interval="100ms"
       breakdown="true"
-      waterfall="true"
-      id="pair-container">
+      waterfall="true">
       <wpt-test
         timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
-        label="infrequently.org, first load">
-        <a 
-          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+        label="A fast HTML website.">
+        <a href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
           target="_new">infrequently.org, first load</a>
       </wpt-test>
       <wpt-test
         timeline="../out/250624_YiDc0Q_2R1/runs/2/firstView/timeline.json"
-        label="bsky.app, first load">
-        <a 
-          href="https://www.webpagetest.org/results.php?test=250624_YiDc0Q_2R1"
+        label="As slow React website.">
+        <a href="https://www.webpagetest.org/results.php?test=250624_YiDc0Q_2R1"
           target="_new">bsky.app, first load</a>
+      </wpt-test>
+      <wpt-test
+        timeline="../out/250624_ZiDcQX_7GN/runs/1/firstView/timeline.json"
+        label="A glacial React (etc.) website.">
+        <a href="https://www.webpagetest.org/results.php?test=250624_ZiDcQX_7GN"
+          target="_new">BenefitsCal, first load</a>
       </wpt-test>
       <a 
         href="https://www.webpagetest.org/video/compare.php?tests=250624_ZiDcA4_2T7-r:3-c:0,250624_YiDc0Q_2R1-r:3-c:0"
@@ -108,15 +111,16 @@
 
     <!-- Just connections and breakdown -->
 
-    <!-- <wpt-filmstrip 
+    <wpt-filmstrip 
         filmstrip="false" 
         connections="true" 
         breakdown="true">
       <wpt-test
-        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
-        label="Dummy test with AVIF images and all data">
+        timeline="../out/250624_ZiDcQX_7GN/runs/1/firstView/timeline.json"
+        label="A glacial React (etc.) website.">
       </wpt-test>
     </wpt-filmstrip>
+
     <wpt-filmstrip size="small" debug>
       <wpt-test
         timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
@@ -151,7 +155,6 @@
       </wpt-test>
     </wpt-filmstrip>
 
-    
     <wpt-filmstrip size="large" interval="100">
       <wpt-test
         timeline="../out/250624_ZiDcA4_2T7/runs/3/firstView/timeline.json"
@@ -165,28 +168,27 @@
     <wpt-filmstrip 
       style="display: block; max-width: 80%; margin: auto;"
       size="small"
-      interval="500ms"
+      interval="100ms"
       breakdown="true"
       id="pair-container">
       <wpt-test
-        timeline="../out/250624_ZiDcA4_2T7/runs/1/firstView/timeline.json"
-        label="infrequently.org, first load">
-        <a 
-          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
-          target="_new">infrequently.org, first load</a>
+        test="../out/250624_ZiDcA4_2T7/"
+        run="2"
+        label="infrequently.org, first view">
+        <a href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+          target="_new">infrequently.org, first view</a>
       </wpt-test>
       <wpt-test
-        timeline="../out/250624_ZiDcA4_2T7/runs/1/repeatView/timeline.json"
+        test="../out/250624_ZiDcA4_2T7/"
+        view="repeat"
+        run="2"
         label="infrequently.org, repeat view">
-        <a 
-          href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
+        <a href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
           target="_new">infrequently.org, repeat view</a>
       </wpt-test>
-      <a 
-        href="https://www.webpagetest.org/video/compare.php?tests=250624_ZiDcA4_2T7-r:3-c:0,250624_ZiDcA4_2T7-r:3-c:1"
+      <a href="https://www.webpagetest.org/video/compare.php?tests=250624_ZiDcA4_2T7-r:3-c:0,250624_ZiDcA4_2T7-r:3-c:1"
         target="_new">,side-by-side view</a>
-    </wpt-filmstrip> -->
-
+    </wpt-filmstrip>
 
     <script>
       let pc = document.getElementById("pair-container");
@@ -204,9 +206,11 @@
       }
 
       function changeInterval() {
-        pc.setAttribute('interval', '1000ms');
+        // pc.setAttribute('interval', '60fps');
+        pc.interval = "60fps";
       }
-    </script>
+      </script>
+    </wpt-filmstrip>
     <button onclick="removeLast();">
       remove last
     </button>
@@ -216,6 +220,242 @@
     <button onclick="changeInterval();">
       change interval
     </button> 
+
+    <wpt-filmstrip 
+      style="display: block; max-width: 80%; margin: auto;"
+      size="small"
+      interval="100ms"
+      breakdown="true">
+      <!-- an inline version -->
+      <wpt-test
+        label="From inline'd data.">
+<script type="text/json" dir="../out/">
+{
+  "id": "250624_ZiDcA4_2T7",
+  "url": "https://infrequently.org/",
+  "summary": "https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7",
+  "testUrl": "https://infrequently.org/",
+  "location": "IAD_US_01:Chrome",
+  "from": "Dulles, Virginia USA - <b>Chrome</b> - <b>Emulated Motorola G (gen 4)</b> - <b>4G</b>",
+  "connectivity": "4G",
+  "bwDown": 9000,
+  "bwUp": 9000,
+  "latency": 170,
+  "plr": null,
+  "shaperLimit": 0,
+  "mobile": 1,
+  "completed": 1750749173,
+  "testRuns": 3,
+  "optimizedImages": true,
+  "view": "firstView",
+  "run": "1",
+  "pages": {
+    "details": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/details/",
+    "checklist": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/performance_optimization/",
+    "breakdown": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/breakdown/",
+    "domains": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/domains/",
+    "screenShot": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/screen_shot/",
+    "opportunities": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/experiments/"
+  },
+  "thumbnails": {
+    "waterfall": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1_waterfall_thumb.png",
+    "checklist": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1_optimization_thumb.png",
+    "screenShot": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1_screen_thumb.png"
+  },
+  "images": {
+    "waterfall": "https://www.webpagetest.org/result/25/06/24/ZiDcA4/2T7/1_waterfall.png",
+    "connectionView": "https://www.webpagetest.org/result/25/06/24/ZiDcA4/2T7/1_connection.png",
+    "checklist": "https://www.webpagetest.org/result/25/06/24/ZiDcA4/2T7/1_optimization.png",
+    "screenShot": "https://www.webpagetest.org/getfile.php?test=250624_ZiDcA4_2T7&file=1_screen.jpg"
+  },
+  "breakdown": {
+    "html": {
+      "color": [
+        130,
+        181,
+        252
+      ],
+      "bytes": 50258,
+      "bytesUncompressed": 161736,
+      "requests": 1
+    },
+    "js": {
+      "color": [
+        254,
+        197,
+        132
+      ],
+      "bytes": 10664,
+      "bytesUncompressed": 37744,
+      "requests": 3
+    },
+    "css": {
+      "color": [
+        178,
+        234,
+        148
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    },
+    "image": {
+      "color": [
+        196,
+        154,
+        232
+      ],
+      "bytes": 61216,
+      "bytesUncompressed": 61302,
+      "requests": 4
+    },
+    "flash": {
+      "color": [
+        45,
+        183,
+        193
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    },
+    "font": {
+      "color": [
+        255,
+        82,
+        62
+      ],
+      "bytes": 42824,
+      "bytesUncompressed": 42824,
+      "requests": 1
+    },
+    "video": {
+      "color": [
+        33,
+        194,
+        162
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    },
+    "other": {
+      "color": [
+        196,
+        196,
+        196
+      ],
+      "bytes": 552,
+      "bytesUncompressed": 552,
+      "requests": 1
+    }
+  },
+  "loadTime": 2141,
+  "docTime": 2141,
+  "fullyLoaded": 2768,
+  "firstPaint": 1782,
+  "firstContentfulPaint": 1782,
+  "firstMeaningfulPaint": 2140,
+  "lastVisualChange": 2000,
+  "visualComplete": 2000,
+  "visualComplete85": 1900,
+  "visualComplete90": 1900,
+  "visualComplete95": 1900,
+  "visualComplete99": 2000,
+  "SpeedIndex": 1822,
+  "navigationStart": 124,
+  "fetchStart": 101,
+  "domLoading": 899,
+  "responseEnd": 1194,
+  "domInteractive": 1244,
+  "domContentLoadedEventStart": 1277,
+  "domContentLoadedEventEnd": 1279,
+  "domComplete": 2140,
+  "unloadEventStart": 887,
+  "unloadEventEnd": 887,
+  "markAsMainFrame": 891,
+  "commitNavigationEnd": 894,
+  "firstMeaningfulPaintCandidate": 2140,
+  "firstImagePaint": 1782,
+  "LayoutShift": 1810,
+  "loadEventStart": 2140,
+  "loadEventEnd": 2140,
+  "LargestTextPaint": 1782,
+  "LargestContentfulPaint": 1782,
+  "waterfall": "waterfall.png",
+  "connectionView": "connectionView.png",
+  "checklist": "checklist.png",
+  "screenShot": "screenShot.png",
+  "filmstripFrames": [
+    {
+      "time": 0,
+      "image": "filmstrip/ms_000000.jpg",
+      "VisuallyComplete": 0
+    },
+    {
+      "time": 1800,
+      "image": "filmstrip/ms_001800.jpg",
+      "VisuallyComplete": 82
+    },
+    {
+      "time": 1900,
+      "image": "filmstrip/ms_001900.jpg",
+      "VisuallyComplete": 96
+    },
+    {
+      "time": 2000,
+      "image": "filmstrip/ms_002000.jpg",
+      "VisuallyComplete": 100
+    }
+  ],
+  "filmstripImageData": {
+    "format": "jpeg",
+    "width": 360,
+    "height": 510,
+    "space": "b-w",
+    "channels": 1,
+    "depth": "uchar",
+    "density": 72,
+    "chromaSubsampling": "4:4:4",
+    "isProgressive": false,
+    "isPalette": false,
+    "hasProfile": false,
+    "hasAlpha": false,
+    "autoOrient": {
+      "width": 360,
+      "height": 510
+    }
+  },
+  "filmstripImageAspectRatio": "360 / 510",
+  "gifImageData": {
+    "format": "gif",
+    "width": 520,
+    "height": 680,
+    "space": "srgb",
+    "channels": 4,
+    "depth": "uchar",
+    "isProgressive": false,
+    "isPalette": true,
+    "bitsPerSample": 8,
+    "paletteBitDepth": 8,
+    "pages": 50,
+    "loop": 0,
+    "background": {
+      "r": 0,
+      "g": 255,
+      "b": 0
+    },
+    "hasProfile": false,
+    "hasAlpha": true,
+    "autoOrient": {
+      "width": 520,
+      "height": 680
+    }
+  },
+  "gifImageAspectRatio": "520 / 680"
+}
+</script>
+      </wpt-test>
 
   </body>
 </html>

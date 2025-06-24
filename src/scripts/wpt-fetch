@@ -148,10 +148,32 @@ let ebf = wrapEBF;
         return new Promise((res) => { return setTimeout(res, ms)});
       }
 
+      let optimizeToPath = async (path, quiet=false) => {
+        if(
+           !opts.optimizeImages ||
+           !(path.endsWith(".png") || path.endsWith(".jpg"))
+        ) {
+          return;
+        }
+        let avifPath = path.slice(0, -4) + ".avif";
+        try {
+          await fs.stat(avifPath);
+        } catch (e) {
+          !quiet && spinner.info(` Transcoding ${path}`);
+          // Transcode
+          let avif = await sharp(path)
+                              .avif({ quality: 40, effort: 4 })
+                              .toBuffer();
+          await fs.writeFile(avifPath, avif);
+        }
+      }
+
       let downloadToPath = async (url, path, desc="", replace=false, quiet=false, retries=0, maxRetries=2, delay=500) => {
         try {
           if (opts.download) { throw "forcing download"; }
           await fs.stat(path);
+          // !quiet && spinner.info(` Using cached file: ${path}`);
+          await optimizeToPath(path, quiet);
         } catch(e) {
           !quiet && spinner.start(` Downloading ${desc}`);
           let resp = await fetch(url.toString(), {
@@ -159,19 +181,10 @@ let ebf = wrapEBF;
           });
           if (resp.status == 200) {
             await fs.writeFile(path, resp.body);
+            await optimizeToPath(path, quiet);
             !quiet && spinner[ replace ? "start" : "succeed"](
               ` Downloaded ${desc}`
             );
-            if(opts.optimizeImages) {
-              if(path.endsWith(".png") || path.endsWith(".jpg")) {
-                let avifPath = path.slice(0, -4) + ".avif";
-                // Transcode to AVIF
-                let avif = await sharp(path)
-                                    .avif({ quality: 40, effort: 4 })
-                                    .toBuffer();
-                await fs.writeFile(avifPath, avif);
-              }
-            }
           } else {
             spinner.fail(` Failed to download ${url+""}`);
 
@@ -216,6 +229,7 @@ let ebf = wrapEBF;
           let runStr = `${testId}-r:${r}-c:${ view == "firstView" ? 0 : 1}`;
           let viewData = Object.assign({}, baseData);
           viewData.view = view;
+          viewData.run = r;
           // Nested objects
           ["pages", "thumbnails", "images", "breakdown"].forEach((o) => {
             viewData[o] = Object.assign({}, run[view][o]);
@@ -310,6 +324,9 @@ let ebf = wrapEBF;
           //
           // Example URL for video:
           //    https://www.webpagetest.org/video/video.php?tests=240612_AiDcH3_9XB-r:1-c:0&bg=ffffff&text=222222&end=visual&format=mp4
+          // 
+          // Direct URL from player <video> tag:
+          //    https://www.webpagetest.org/video/video.php?tests=250622_ZiDc92_46F-r:1-c:1
 
           spinner.start(` Downloading video of ${testId}, run ${r}, ${view}`);
           let timelineVideoPosterPath = join(viewDir, "poster.png");
@@ -322,7 +339,6 @@ let ebf = wrapEBF;
           );
 
           let timelineVideoPath = join(viewDir, "timeline.mp4");
-          // let video = (await (ebf(wpt.createVideo, wpt)(testId)));
           let videoURL = new URL("https://www.webpagetest.org/video/video.php");
           videoURL.searchParams.set("tests", runStr);
           // TODO: support other end points, see:
@@ -345,8 +361,12 @@ let ebf = wrapEBF;
           //    - Should we record each of these so the component 
           //      can decide at runtime? 
           //
-          videoURL.searchParams.set("end", "visual");
-          videoURL.searchParams.set("format", "mp4");
+
+          // TODO(slightlyoff): these seem to be causing fetch failures
+          //
+          // videoURL.searchParams.set("end", "visual");
+          // videoURL.searchParams.set("format", "mp4");
+
           await downloadToPath(
             videoURL, 
             timelineVideoPath, 
@@ -447,6 +467,9 @@ let ebf = wrapEBF;
             "Path to a JSON configuration file. Command-line arguments override values specified in the file.")
             .env("WPT_JSON_CONFIG")
     )
+    .addOption(
+      new Option("-q, --quiet", "Avoid logging.").env("WPT_QUIET")
+    )
     // .option("-x, --comparison-video", 
     //           "Download a side-by-side comparison video in addition to per-timeline videos.", 200)
     .argument("[ids...]", "WPT test IDs, space separated")
@@ -530,6 +553,10 @@ Example with JSON configuration:
       let res = await fs.readFile(jsonFilePath, { encoding: "utf-8" });
       let jsonData = JSON.parse(res);
       if (!jsonData) { throw "config file parse failed"; }
+
+      if (jsonData?.key === "YOUR_KEY_HERE") {
+        delete jsonData.key;
+      }
       jsonOpts = jsonData;
     } catch(e) {
       console.error(`failed to read: ${jsonFilePath}`);
@@ -541,7 +568,10 @@ Example with JSON configuration:
 
   let ids = jsonOpts?.ids || prog.args;
 
-  let spinner = ora("Starting...").start();
+  let spinner = ora({
+    text: "Starting...",
+    isSilent: opts.quiet,
+  }).start();
   await fetchResults(opts, ids, spinner);
   spinner.stop();
 })();

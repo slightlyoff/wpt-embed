@@ -15,6 +15,14 @@
  * - "play" button?
  */
 
+// Dummy for syntax highlighting
+let css = function(strs, subs) {
+ if (strs?.length > 1 || subs?.length > 1) {
+  console.error("`css` tag called with values, which should not happen"); 
+ }
+ return strs[0];
+} 
+
 CSS.registerProperty({
   name: "--wpt-scroll-pct",
   syntax: "<percentage>",
@@ -122,7 +130,7 @@ class WPTFilmstrip extends HTMLElement {
     "gif",
   ];
 
-  static styles = `
+  static styles = css`
     /* A wee reset */
     h1, h2, h3, h4, p, figure, blockquote, dl, dd {
       margin-block-end: 0;
@@ -696,7 +704,6 @@ class WPTFilmstrip extends HTMLElement {
         longest = len;
       }
     }
-    let ctr = this.byId("main-table").tBodies[0];
     this.style.setProperty("--wpt-longest-test", longest);
 
     this.#tests.forEach((t) => {
@@ -704,7 +711,7 @@ class WPTFilmstrip extends HTMLElement {
         t.renderFilmstripInto(
           this.#_intervalMs,
           timings.length,
-          ctr
+          this.byId("main-table").tBodies[0]
         );
       } else {
         this.byId("main-table").classList.add("hidden");
@@ -771,10 +778,15 @@ class WPTTest extends HTMLElement {
 
   static observedAttributes = [
     "label",
+    "test",
+    "run",
+    "view",
     "timeline",
     "timeline-video",
     "aspect-ratio",
     "avif",
+    // TODO: ID reference to an existing test data obj
+    // "ref",
   ];
 
   static tagName = "wpt-test";
@@ -800,6 +812,7 @@ class WPTTest extends HTMLElement {
        this.parentNode?.tagName === WPTFilmstrip.tagName) {
         this.#connected = true;
         this.#maybeNotify();
+        this.#maybeBuildTimeline();
     }
   }
 
@@ -815,6 +828,26 @@ class WPTTest extends HTMLElement {
   }
   get label()  { return this.#_label; }
 
+  #test = "";
+  set test(v) { 
+    this.#test = v;
+    if(v) { this.#maybeBuildTimeline(); }
+  }
+
+  #run = "1";
+  set run(v) {
+    this.#run = parseInt(v) + "";
+    if(v) { this.#maybeBuildTimeline(); }
+  }
+
+  #view = "first";
+  set view(v) {
+    if(v && ["first", "repeat"].includes(v)) {
+      this.#view = v;
+      this.#maybeBuildTimeline();
+    }
+  }
+
   get duration() {
     return this?.data?.fullyLoaded || 0;
   }
@@ -825,15 +858,43 @@ class WPTTest extends HTMLElement {
   }
   get avif() { return this.#_avif; }
 
+  #maybeBuildTimeline() {
+    if(!this.#connected) { return; }
+    if(this.#test && this.#run && this.#view) {
+      let u = `${this.#test}runs/${this.#run}/${this.#view}View/timeline.json`;
+      this.updateTimeline(u);
+      return;
+    }
+    let inlineConfig = 
+        this.querySelector(`:scope > script[type="text/json"]`) ||
+        this.querySelector(`:scope > script[type="application/json"]`);
+    if(inlineConfig && inlineConfig.hasAttribute("dir")) {
+      let cfg = JSON.parse(inlineConfig.textContent);
+      let dir = inlineConfig.getAttribute("dir");
+      let run = inlineConfig.getAttribute("run") || "1";
+      let test = `${dir}${cfg.id}/runs/${run}/${cfg.view}/timeline.json`;
+      console.log(test);
+      this.data = cfg;
+      this.avif = this.data.optimizedImages;
+      this.#_timeline = test;
+      this.#maybeNotify();
+    }
+  }
+
   async updateTimeline(url) {
     if( (!url) || (url === this.#_timeline)) { return; }
 
     this.#_timeline = url;
     // Fetch and parse
-    let r = await fetch(url);
-    this.data = await r.json();
-    this.avif = this.data.optimizedImages;
-    this.#maybeNotify();
+    try {
+      let r = await fetch(url);
+      this.data = await r.json();
+      this.avif = this.data.optimizedImages;
+      this.#maybeNotify();
+    } catch(e) {
+      console.error(e);
+      this.data = null;
+    }
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -875,6 +936,17 @@ class WPTTest extends HTMLElement {
       r.setEndAfter(this.#fragEnd);
       this.#extracted = r.extractContents();
       r.detach();
+
+      [
+        this.#waterfall,
+        this.#connections,
+        this.#breakdown,
+        this.#crux,
+        this.#video,
+        this.#gif,
+      ].forEach((ref) => { 
+        if(ref) { ref.remove(); }
+      });
       return this.#extracted;
     }
   }
@@ -961,14 +1033,6 @@ class WPTTest extends HTMLElement {
     return figure;
   }
 
-  #view = "";
-  get view() {
-    if(!this.#view && this.data) {
-      this.#view = this.data.view == "firstView" ? "first" : "repeat";
-    }
-    return this.#view;
-  }
-
   #location = "";
   get location() {
     if(!this.#location && this.data) {
@@ -989,7 +1053,7 @@ class WPTTest extends HTMLElement {
                      .replace(" - ", ` on an `)
                      .replace(" - ", ` using an emulated `) + " connection";
 
-      this.#summary = `${this.location} tested from ${from}; ${this.view} view`;
+      this.#summary = `${this.location} tested from ${from}; ${this.#view} view`;
     }
     return this.#summary; 
   }
@@ -1002,13 +1066,12 @@ class WPTTest extends HTMLElement {
       // Ensure order
       container.appendChild(this.#waterfall);
     }
-    if(this.data) {
-      let wqs = eqs(this.#waterfall);
-      wqs("a").href = this.data.summary;
-      wqs("img").src = this.#relativeImgURL(this.data.waterfall);
-      wqs("figcaption").innerText = this.summary; 
-      this.#waterfall.style.setProperty("--wpt-test-length", this?.data?.fullyLoaded);
-    }
+    if(!this.data) { return; }
+    let wqs = eqs(this.#waterfall);
+    wqs("a").href = this.data.summary;
+    wqs("img").src = this.#relativeImgURL(this.data.waterfall);
+    wqs("figcaption").innerText = this.summary; 
+    this.#waterfall.style.setProperty("--wpt-test-length", this?.data?.fullyLoaded);
   }
 
 
@@ -1036,7 +1099,7 @@ class WPTTest extends HTMLElement {
         <tr>
           <th>Type</th>
           <th>Wire Size</th>
-          <th>Uncompressed</th>
+          <th>Decoded</th>
           <th>Requests</th>
         </tr>
       </thead>
@@ -1059,16 +1122,20 @@ class WPTTest extends HTMLElement {
 
   #breakdown = null;
   renderBreakdownInto(container) {
-    if(this.#breakdown || !(this?.data?.breakdown)) { return; }
-
+    if(this.#breakdown) {
+      container.appendChild(this.#breakdown);
+      return;
+    }
+    if(!(this?.data?.breakdown)) { return; }
     delete this.data.breakdown.flash;
+
     // Build the breakdown table and chart
     container.appendChild(WPTTest.breakdownTemplate.cloneNode(true));
     let bdt = this.#breakdown = container.lastElementChild;
 
     // Caption
     let c = qs(bdt, "caption");
-    c.textContent = `${this.location}, ${this.view} view`;
+    c.textContent = `${this.location}, ${this.#view} view`;
 
     // Fill the rows with data
     let rt = qs(bdt, "tbody > tr");
@@ -1086,7 +1153,7 @@ class WPTTest extends HTMLElement {
     }
     this.data.breakdown.Total = total;
     for(let [ k, v ] of Object.entries(this.data.breakdown)) {
-      if(v.bytes === 0) { continue; }
+      // if(v.bytes === 0) { continue; }
       let r = rt.cloneNode(true);
       r.firstElementChild.textContent = k;
       r.children[1].textContent = this.#kbFormatter.format(v.bytes / 1000);
