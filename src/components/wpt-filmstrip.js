@@ -1,9 +1,8 @@
 /**
  * TODO:
  *
- * - waterfall view & styling + :part()s
+ * - styling + :part()s
  * - pie charts in breakdown
- * - inline data support
  * - support an `order` attribute
  * - Highlight low compression ratios and large payloads
  * - theme support
@@ -830,6 +829,7 @@ class WPTTest extends HTMLElement {
 
   #test = "";
   set test(v) { 
+    if(v && !v.endsWith("/")) { v += "/"; }
     this.#test = v;
     if(v) { this.#maybeBuildTimeline(); }
   }
@@ -871,9 +871,7 @@ class WPTTest extends HTMLElement {
     if(inlineConfig && inlineConfig.hasAttribute("dir")) {
       let cfg = JSON.parse(inlineConfig.textContent);
       let dir = inlineConfig.getAttribute("dir");
-      let run = inlineConfig.getAttribute("run") || "1";
-      let test = `${dir}${cfg.id}/runs/${run}/${cfg.view}/timeline.json`;
-      console.log(test);
+      let test = `${dir}${cfg.id}/runs/${cfg.run}/${cfg.view}/timeline.json`;
       this.data = cfg;
       this.avif = this.data.optimizedImages;
       this.#_timeline = test;
