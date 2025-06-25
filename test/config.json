@@ -7,5 +7,6 @@
   "rebuildTimelines": true,
   "optimizeImages": true,
   "prettyPrint": true,
+  "maxRuns": 2,
   "quiet": false
 }

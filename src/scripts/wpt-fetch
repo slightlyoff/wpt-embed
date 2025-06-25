@@ -220,7 +220,12 @@ let ebf = wrapEBF;
       }
 
       let runs = results.runs;
+      let runCount = 0;
       for(let r in runs) {
+        runCount++;
+        if(opts.maxRuns && (runCount > opts.maxRuns)) {
+          continue; // Skip
+        }
         let run = runs[r];
         spinner.start(` Downloading test run images for test ${testId}, run ${r}`);
 
@@ -466,6 +471,12 @@ let ebf = wrapEBF;
       new Option("-j, --json-config <path>",
             "Path to a JSON configuration file. Command-line arguments override values specified in the file.")
             .env("WPT_JSON_CONFIG")
+    )
+    .addOption(
+      new Option("-m, --max-runs <runs>",
+            "Maximum number of runs to download resources for. The default (0) indicates uncapped fetching.")
+            .default(0)
+            .env("WPT_MAX_RUNS")
     )
     .addOption(
       new Option("-q, --quiet", "Avoid logging.").env("WPT_QUIET")
