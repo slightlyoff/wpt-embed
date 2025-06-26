@@ -127,6 +127,7 @@ class WPTFilmstrip extends HTMLElement {
     "crux",
     "video",
     "gif",
+    "end",
   ];
 
   static styles = css`
@@ -665,6 +666,21 @@ class WPTFilmstrip extends HTMLElement {
   }
   get gif() { return this.#gif; }
 
+  #end = "full";
+  #endMapping = {
+    "full": "fullyLoaded",
+    "visual": "visualComplete",
+    "onload": "loadEventEnd",
+    "lcp": "LargestContentfulPaint",
+    "fcp": "FirstContentfulPaint",
+  };
+  set end(v) {
+    if (!this.#endMapping[v]) { return; }
+    this.#end = ((v === "end") ? "full" : v);
+  }
+  get end() { return this.#end; }
+  get longEnd() { return this.#endMapping[this.#end]; }
+
   connectedCallback() {
     this.wireElements();
   }
@@ -698,7 +714,7 @@ class WPTFilmstrip extends HTMLElement {
 
     var longest = 0;
     for(let t of this.#tests) {
-      let len = t?.data?.fullyLoaded || 0;
+      let len = t.duration || 0;
       if(len > longest) {
         longest = len;
       }
@@ -849,7 +865,7 @@ class WPTTest extends HTMLElement {
   }
 
   get duration() {
-    return this?.data?.fullyLoaded || 0;
+    return this?.data?.[this?.parentNode?.longEnd] || 0;
   }
 
   #_avif = false;
@@ -1058,6 +1074,10 @@ class WPTTest extends HTMLElement {
 
   #waterfall = null;
   renderWaterfallInto(container) {
+    if(this?.parentNode?.end != "full") {
+      console.error("cannot render waterfalls for filmstrips that specify an 'end' other than 'full'");
+      return;
+    }
     if(!this.#waterfall) {
       this.#waterfall = this.#setupFigure(container, "waterfall-figure", true);
     } else {
@@ -1075,6 +1095,10 @@ class WPTTest extends HTMLElement {
 
   #connections = null;
   renderConnectionsInto(container) {
+    if(this?.parentNode?.end != "full") {
+      console.error("cannot render connections for filmstrips that specify an 'end' other than 'full'");
+      return;
+    }
     if(this.#connections) {
       container.appendChild(this.#connections);
       return;
@@ -1385,7 +1409,7 @@ class WPTTest extends HTMLElement {
 
     // Walk forward
     // while(current <= (this.data.visualComplete + interval)) {
-    while(current <= (this.data.fullyLoaded + interval)) {
+    while(current <= (this.duration + interval)) {
       let i = this.getFilmstripImage(advanceTo(current));
       if(frames.length < 5) {
         i.querySelector("img").removeAttribute("loading");
