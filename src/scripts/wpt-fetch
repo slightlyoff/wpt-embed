@@ -250,7 +250,7 @@ let ebf = wrapEBF;
           //  domInteractive
           //  render
           //  TTIMeasurementEnd
-          //  TotalBlockingTime
+          //  longTasks and interactivePeriods (large?)
           //
           [ 
             "loadTime",
@@ -266,6 +266,7 @@ let ebf = wrapEBF;
             "visualComplete95",
             "visualComplete99",
             "SpeedIndex",
+            "TotalBlockingTime",
           ].forEach((v) => {
             viewData[v] = run[view][v];
           });
