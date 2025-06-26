@@ -298,7 +298,7 @@ class WPTFilmstrip extends HTMLElement {
     }
 
     :host([size="medium"]) {
-      --wpt-image-width: 50px;
+      --wpt-image-width: 100px;
     }
 
     :host([size="large"]) {
