@@ -128,6 +128,7 @@ class WPTFilmstrip extends HTMLElement {
     "video",
     "gif",
     "end",
+    "order",
   ];
 
   static styles = css`
@@ -237,7 +238,7 @@ class WPTFilmstrip extends HTMLElement {
      * 
      ***/
     
-    #scroll-container {
+    #filmstrip {
       overflow-x: auto;
       display: block;
       position: relative;
@@ -250,10 +251,10 @@ class WPTFilmstrip extends HTMLElement {
     /* TODO: elide when there's no filmstrip */
     :host([waterfall]),
     :host([connections]) {
-      #scroll-container {
+      #filmstrip {
         border-left: var(--wpt-progress-line-width) solid var(--wpt-progress-line-color);
       }
-      #scroll-container.hidden { display: none; }
+      #filmstrip.hidden { display: none; }
     }
 
     #main-table {
@@ -386,6 +387,7 @@ class WPTFilmstrip extends HTMLElement {
      ***/
     #crux {
       flex-direction: column;
+      font-size: 0.8rem;
 
       & > .crux {
         width: 100%;
@@ -409,18 +411,29 @@ class WPTFilmstrip extends HTMLElement {
             margin: 0.2em 0;
           }
 
+          --good: var(--wpt-crux-good, rgb(12, 206, 107));
+          --fair: var(--wpt-crux-fair, rgb(255, 164, 0));
+          --poor: var(--wpt-crux-poor, rgb(255, 78, 66));
+
+          /* TODO: themes & contrast */
           & .good {
-            background-color: var(--wpt-crux-good, rgb(12, 206, 107));
-            color: white; /* TODO: themes & contrast */
+            background-color: var(--good);
+            color: white;
           }
           & .fair {
-            background-color: var(--wpt-crux-fair, rgb(255, 164, 0));
+            background-color: var(--fair);
           }
           & .poor {
-            background-color: var(--wpt-crux-poor, rgb(255, 78, 66));
-            color: white; /* TODO: themes & contrast */
+            background-color: var(--poor);
+            color: white;
           }
 
+          & .value {
+            background-color: inherit;
+            &.good { color: var(--good); }
+            &.fair { color: var(--fair); }
+            &.poor { color: var(--poor); }
+          }
           & > ul {
             list-style: none;
             padding: 0;
@@ -527,13 +540,25 @@ class WPTFilmstrip extends HTMLElement {
      * 
      ***/
 
+    /*
     #gif,
-    #video {
+    #video { }
+    */
+
+    /**************
+     * 
+     * Misc
+     * 
+     ***/
+    #gif,
+    #video,
+    #breakdown {
+      flex-wrap: wrap;
     }
   `;
 
   static template = templateFor(`
-  <div id="scroll-container" part="scroll-container">
+  <div id="filmstrip" part="filmstrip">
     <table id="main-table">
       <tbody>
         <tr id="timing">
@@ -637,15 +662,11 @@ class WPTFilmstrip extends HTMLElement {
   get waterfall() { return this.#waterfall; }
 
   #connections = false;
-  set connections(v) {
-    this.#connections = attrToBool(v, "connections");
-  }
+  set connections(v) { this.#connections = attrToBool(v, "connections"); }
   get connections() { return this.#connections; }
 
   #breakdown = false;
-  set breakdown(v) {
-    this.#breakdown = attrToBool(v, "breakdown");
-  }
+  set breakdown(v) { this.#breakdown = attrToBool(v, "breakdown"); }
   get breakdown() { return this.#breakdown; }
 
   #crux = [];
@@ -655,16 +676,16 @@ class WPTFilmstrip extends HTMLElement {
   get crux() { return this.#crux; }
 
   #video = false;
-  set video(v) {
-    this.#video = attrToBool(v, "video");
-  }
+  set video(v) { this.#video = attrToBool(v, "video"); }
   get video() { return this.#video; }
 
   #gif = false;
-  set gif(v) {
-    this.#gif = attrToBool(v, "gif");
-  }
+  set gif(v) { this.#gif = attrToBool(v, "gif"); }
   get gif() { return this.#gif; }
+
+  #order = [];
+  set order(v) { this.#order = attrToList(v, "order", []); }
+  get order() { return this.#order; }
 
   #end = "full";
   #endMapping = {
@@ -694,10 +715,17 @@ class WPTFilmstrip extends HTMLElement {
 
   #_matchHiddenState(value, el) {
     if(typeof el === "string") { el = this.byId(el); }
-    el.classList[ !!value ? "remove" : "add" ]("hidden");
+    let hidden = true;
+    if((typeof value === "string") || Array.isArray(value)) {
+      hidden = !(value.length);
+    } else {
+      hidden = !(value);
+    }
+    el.classList[ hidden ? "add" : "remove" ]("hidden");
     return el;
   }
 
+  // TODO: fix renders before we have data for all tracks
   updateTests() {
     if(!this.#wired) { return; }
     // Get the maximum duration
@@ -710,6 +738,12 @@ class WPTFilmstrip extends HTMLElement {
     }
     if(this.filmstrip) {
       this.byId("timing").replaceChildren(...timings);
+    }
+
+    if(this.#order.length) {
+      this.shadowRoot.prepend(
+        ...(this.#order.map((id) => this.byId(id)))
+      );
     }
 
     var longest = 0;
@@ -730,7 +764,7 @@ class WPTFilmstrip extends HTMLElement {
         );
       } else {
         this.byId("main-table").classList.add("hidden");
-        this.byId("scroll-container").classList.add("hidden");
+        this.byId("filmstrip").classList.add("hidden");
       }
 
       // TODO: DRY
@@ -818,6 +852,7 @@ class WPTTest extends HTMLElement {
       this.dispatchEvent(new CustomEvent("test-modified", {
         bubbles: true,
       }));
+      this.#dirty = false;
     }
   }
 
@@ -911,7 +946,9 @@ class WPTTest extends HTMLElement {
     }
   }
 
+  #attributesSet = false;
   attributeChangedCallback(name, oldValue, newValue) {
+    this.#attributesSet = true;
     if(
       WPTTest.observedAttributes.includes(name) &&
       oldValue !== newValue
@@ -1284,6 +1321,7 @@ class WPTTest extends HTMLElement {
         judgement = "fair";
       } 
       qs(m, ".value").textContent = `${formatted} (${judgement})`;
+      qs(m, ".value").classList.add(judgement);
       // TODO: color the text
       // qs(m, ".value").classList.add(judgement);
 

@@ -222,6 +222,9 @@ let ebf = wrapEBF;
       let runs = results.runs;
       let runCount = 0;
       for(let r in runs) {
+        if(!runs[r]["firstView"]?.videoFrames) {
+          continue;
+        }
         runCount++;
         if(opts.maxRuns && (runCount > opts.maxRuns)) {
           continue; // Skip
@@ -229,7 +232,6 @@ let ebf = wrapEBF;
         let run = runs[r];
         spinner.start(` Downloading test run images for test ${testId}, run ${r}`);
 
-        // TODO: make the end metric configurable
         let fetchViewImages = async (view="firstView") => {
           let runStr = `${testId}-r:${r}-c:${ view == "firstView" ? 0 : 1}`;
           let viewData = Object.assign({}, baseData);
