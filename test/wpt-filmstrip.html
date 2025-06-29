@@ -4,10 +4,10 @@
     <style>
     </style>
     <script type="module">
-      import "../src/components/wpt-filmstrip.js";
+      import "../src/components/wpt-embed.js";
     </script>
     <style>
-      wpt-filmstrip::part(test-link) {
+      wpt-embed::part(test-link) {
         color: black;
       }
 
@@ -65,7 +65,7 @@
     </div> 
     -->
 
-    <wpt-filmstrip 
+    <wpt-embed 
         size="large" 
         interval="100ms"
         waterfall="true" 
@@ -80,9 +80,9 @@
         timeline="../out/benefits-cal/runs/1/firstView/timeline.json"
         label="Dummy test with AVIF images and all data">
       </wpt-test>
-    </wpt-filmstrip> 
+    </wpt-embed> 
 
-    <wpt-filmstrip 
+    <wpt-embed 
       style="display: block; max-width: 80%; margin: auto;"
       size="small"
       interval="100ms"
@@ -109,11 +109,11 @@
       <a 
         href="https://www.webpagetest.org/video/compare.php?tests=250624_ZiDcA4_2T7-r:3-c:0,250624_YiDc0Q_2R1-r:3-c:0"
         target="_new">side-by-side view</a>
-    </wpt-filmstrip>
+    </wpt-embed>
 
     <!-- Just connections and breakdown -->
 
-    <wpt-filmstrip 
+    <wpt-embed 
         filmstrip="false" 
         connections="true" 
         breakdown="true">
@@ -121,9 +121,9 @@
         timeline="../out/benefits-cal/runs/1/firstView/timeline.json"
         label="A glacial React (etc.) website.">
       </wpt-test>
-    </wpt-filmstrip>
+    </wpt-embed>
 
-    <wpt-filmstrip size="small" debug>
+    <wpt-embed size="small" debug>
       <wpt-test
         timeline="../out/infrequently/runs/1/firstView/timeline.json"
         label="TEST">
@@ -131,9 +131,9 @@
           href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
           target="_new">infrequently.org, first load</a>
       </wpt-test>
-    </wpt-filmstrip> 
+    </wpt-embed> 
 
-    <wpt-filmstrip 
+    <wpt-embed 
       size="medium" 
       interval="60fps"
       connections="true"
@@ -145,9 +145,9 @@
           href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
           target="_new">infrequently.org, first view</a>
       </wpt-test>
-    </wpt-filmstrip> 
+    </wpt-embed> 
    
-    <wpt-filmstrip size="small" interval="100ms">
+    <wpt-embed size="small" interval="100ms">
       <wpt-test
         timeline="../out/infrequently/runs/1/firstView/timeline.json"
         label="infrequently.org, first load">
@@ -155,9 +155,9 @@
           href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
           target="_new">infrequently.org, first view</a>
       </wpt-test>
-    </wpt-filmstrip>
+    </wpt-embed>
 
-    <wpt-filmstrip size="large" interval="100">
+    <wpt-embed size="large" interval="100">
       <wpt-test
         timeline="../out/infrequently/runs/3/firstView/timeline.json"
         label="infrequently.org, first load, run 3">
@@ -165,9 +165,9 @@
           href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
           target="_new">infrequently.org, first view, run 3</a>
       </wpt-test>
-    </wpt-filmstrip>
+    </wpt-embed>
 
-    <wpt-filmstrip 
+    <wpt-embed 
       style="display: block; max-width: 80%; margin: auto;"
       size="small"
       interval="100ms"
@@ -190,7 +190,7 @@
       </wpt-test>
       <a href="https://www.webpagetest.org/video/compare.php?tests=250624_ZiDcA4_2T7-r:3-c:0,250624_ZiDcA4_2T7-r:3-c:1"
         target="_new">,side-by-side view</a>
-    </wpt-filmstrip>
+    </wpt-embed>
 
     <script>
       let pc = document.getElementById("pair-container");
@@ -212,7 +212,7 @@
         pc.interval = "60fps";
       }
       </script>
-    </wpt-filmstrip>
+    </wpt-embed>
     <button onclick="removeLast();">
       remove last
     </button>
@@ -223,7 +223,7 @@
       change interval
     </button> 
 
-    <wpt-filmstrip 
+    <wpt-embed 
       style="display: block; max-width: 80%; margin: auto;"
       size="small"
       interval="100ms"

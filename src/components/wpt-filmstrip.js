@@ -114,7 +114,7 @@ let templateFor = (str) => {
   return document.body.lastElementChild.content;
 };
 
-class WPTFilmstrip extends HTMLElement {
+class WPTembed extends HTMLElement {
 
   static observedAttributes = [
     "aspect-ratio",
@@ -164,7 +164,7 @@ class WPTFilmstrip extends HTMLElement {
     }
 
     :host {
-      timeline-scope: --wpt-filmstrip-scroller;
+      timeline-scope: --wpt-embed-scroller;
 
       --wpt-image-width: var(--image-width, 100px);
       --wpt-progress-line-color: red;
@@ -245,7 +245,7 @@ class WPTFilmstrip extends HTMLElement {
       scrollbar-gutter: stable;
 
       scroll-timeline-axis: x;
-      scroll-timeline-name: --wpt-filmstrip-scroller;
+      scroll-timeline-name: --wpt-embed-scroller;
     }
 
     /* TODO: elide when there's no filmstrip */
@@ -530,7 +530,7 @@ class WPTFilmstrip extends HTMLElement {
         */
 
         animation: scrollTransform linear(0, var(--wpt-start-stop) 0%, 1 var(--wpt-end-stop) 90%);
-        animation-timeline: --wpt-filmstrip-scroller;
+        animation-timeline: --wpt-embed-scroller;
       }
     }
 
@@ -574,7 +574,7 @@ class WPTFilmstrip extends HTMLElement {
   <div id="video" part="video" class="hidden"></div>
   `);
 
-  static tagName = "wpt-filmstrip";
+  static tagName = "wpt-embed";
   get tagName() { return this.constructor.tagName; }
 
   constructor() {
@@ -584,7 +584,7 @@ class WPTFilmstrip extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if(
-      WPTFilmstrip.observedAttributes.includes(name) &&
+      WPTembed.observedAttributes.includes(name) &&
       oldValue !== newValue
     ) {
       let n = toCamelCase(name);
@@ -807,19 +807,19 @@ class WPTFilmstrip extends HTMLElement {
       this.byId(id).addEventListener(evt, m);
     };
 
-    addStyles(sr, WPTFilmstrip.styles);
+    addStyles(sr, WPTembed.styles);
 
-    sr.appendChild(WPTFilmstrip.template.cloneNode(true));
+    sr.appendChild(WPTembed.template.cloneNode(true));
 
     this.addEventListener("test-modified", this.updateTests);
   }
 }
-customElements.define(WPTFilmstrip.tagName, WPTFilmstrip);
+customElements.define(WPTembed.tagName, WPTembed);
 
 /**
  * Does not render its own Shadow DOM due to the <table> based layout,
  * but owns data for a single timeline, loads it, and notifies the parent when
- * re-rendering is required. Must be nested inside a <wpt-filmstrip>.
+ * re-rendering is required. Must be nested inside a <wpt-embed>.
  *
  * Notifies parent on attribute changes.
  */
@@ -859,7 +859,7 @@ class WPTTest extends HTMLElement {
   #connected = false;
   connectedCallback() {
     if(this.parentNode &&
-       this.parentNode?.tagName === WPTFilmstrip.tagName) {
+       this.parentNode?.tagName === WPTembed.tagName) {
         this.#connected = true;
         this.#maybeNotify();
         this.#maybeBuildTimeline();
@@ -1474,4 +1474,4 @@ class WPTTest extends HTMLElement {
 }
 customElements.define(WPTTest.tagName, WPTTest);
 
-export default WPTFilmstrip;
+export default WPTembed;
