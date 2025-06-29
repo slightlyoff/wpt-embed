@@ -1,9 +1,7 @@
 /**
  * TODO:
  *
- * - styling + :part()s
  * - pie charts in breakdown
- * - support an `order` attribute
  * - Highlight low compression ratios and large payloads
  * - theme support
  * - filmstrip styling for timeline events:
@@ -141,24 +139,6 @@ class WPTembed extends HTMLElement {
       text-wrap: balance;
     }
 
-    /*
-     * Doesn't work currently. See:
-     *
-     *    https://developer.chrome.com/docs/css-ui/css-names 
-     * 
-     * and:
-     *    https://github.com/w3c/csswg-drafts/issues/10541
-     * 
-     * CSS.registerProperty() used instead.
-     */
-    /*
-    @property --wpt-scroll-pct {
-      syntax: "<percentage>";
-      inherits: true;
-      initial-value: 0%;
-    }
-    */
-
     * {
       box-sizing: border-box;
     }
@@ -167,20 +147,15 @@ class WPTembed extends HTMLElement {
       timeline-scope: --wpt-embed-scroller;
 
       --wpt-image-width: var(--image-width, 100px);
-      --wpt-progress-line-color: red;
-      --wpt-progress-line-width: 2px;
+      --wpt-progress-line-color: transparent;
+      --wpt-progress-line-width: 0px;
+
+      @supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+        --wpt-progress-line-color: red;
+        --wpt-progress-line-width: 2px;
+      }
 
       --wpt-section-padding: 1rem 0;
-
-      /* TODOC
-      --wpt-scroll-pct: var(--wpt-line-pct-left, 24.6%);
-      --wpt-line-pct-top: 37px;
-      --wpt-line-pct-bottom: 170px;
-      --wpt-crux-good: rgb(12, 206, 107);
-      --wpt-crux-fair: rgb(255, 164, 0);
-      --wpt-crux-poor: rgb(255, 78, 66);
-      --wpt-breakdown-even-color: ...
-      */
 
       /* TODO:
       --wpt-no-change-border-color: transparent;
@@ -524,11 +499,6 @@ class WPTembed extends HTMLElement {
 
         will-change: left;
 
-        /*
-        animation-name: scrollTransform;
-        animation: scrollTransform linear;
-        */
-
         animation: scrollTransform linear(0, var(--wpt-start-stop) 0%, 1 var(--wpt-end-stop) 90%);
         animation-timeline: --wpt-embed-scroller;
       }
@@ -815,6 +785,8 @@ class WPTembed extends HTMLElement {
   }
 }
 customElements.define(WPTembed.tagName, WPTembed);
+// Support for <= 0.2.10 where <wpt-embed> was named <wpt-filmstrip>
+customElements.define("wpt-filmstrip", WPTembed);
 
 /**
  * Does not render its own Shadow DOM due to the <table> based layout,
@@ -1446,11 +1418,7 @@ class WPTTest extends HTMLElement {
       return framesMeta[0];
     };
 
-    // TODO: allow for configuration of other sorts of end frames, e.g.
-    // `visualComplete`, `fullyLoaded`, etc.
-
     // Walk forward
-    // while(current <= (this.data.visualComplete + interval)) {
     while(current <= (this.duration + interval)) {
       let i = this.getFilmstripImage(advanceTo(current));
       if(frames.length < 5) {
