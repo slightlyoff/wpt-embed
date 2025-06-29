@@ -1350,9 +1350,13 @@ class WPTTest extends HTMLElement {
       month: "long", 
       day: "numeric"
     };
-    let startDate = (new Date(`${fd.year}-${fd.month}-${fd.day}`))
+    let fdm = (fd.month + "").padStart(2, "0");
+    let fdd = (fd.day+ "").padStart(2, "0");
+    let startDate = (new Date(`${fd.year}-${fdm}-${fdd}`))
                       .toLocaleDateString("en", formatOpts);
-    let endDate = (new Date(`${ld.year}-${ld.month}-${ld.day}`))
+    let ldm = (ld.month + "").padStart(2, "0");
+    let ldd = (ld.day+ "").padStart(2, "0");
+    let endDate = (new Date(`${ld.year}-${ldm}-${ldd}`))
                       .toLocaleDateString("en", formatOpts);
     // new ....toLocaleDateString("en", )
     let isMobile = (cd.key.formFactor == "PHONE");
