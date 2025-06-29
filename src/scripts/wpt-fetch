@@ -40,7 +40,6 @@ let ebf = wrapEBF;
 (async() => {
   let { Command, Option } = await import("commander");
   let { default: ora } = await import("ora");
-  // let { default: wpt } = await import("webpagetest");
   let { default: WPT } = await import("webpagetest");
   let os = await import("node:os");
   let fs = await import("node:fs/promises");
@@ -145,7 +144,7 @@ let ebf = wrapEBF;
         baseData[k] = results[k];
       }
 
-      baseDatea.testName = testName;
+      baseData.testName = testName;
       baseData.optimizedImages = opts.optimizeImages;
       baseData.crux = results?.runs["1"]?.firstView?.CrUX;
 
