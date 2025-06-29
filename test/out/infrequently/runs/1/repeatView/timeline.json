@@ -1,0 +1,226 @@
+{
+  "id": "250624_ZiDcA4_2T7",
+  "url": "https://infrequently.org/",
+  "summary": "https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7",
+  "testUrl": "https://infrequently.org/",
+  "location": "IAD_US_01:Chrome",
+  "from": "Dulles, Virginia USA - <b>Chrome</b> - <b>Emulated Motorola G (gen 4)</b> - <b>4G</b>",
+  "connectivity": "4G",
+  "bwDown": 9000,
+  "bwUp": 9000,
+  "latency": 170,
+  "plr": null,
+  "shaperLimit": 0,
+  "mobile": 1,
+  "completed": 1750749173,
+  "testRuns": 3,
+  "testName": "infrequently",
+  "optimizedImages": true,
+  "view": "repeatView",
+  "run": "1",
+  "pages": {
+    "details": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/details/cached/",
+    "checklist": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/performance_optimization/cached/",
+    "breakdown": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/breakdown/cached/",
+    "domains": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/domains/cached/",
+    "screenShot": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/screen_shot/cached/",
+    "opportunities": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1/experiments/cached/"
+  },
+  "thumbnails": {
+    "waterfall": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1_Cached_waterfall_thumb.png",
+    "checklist": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1_Cached_optimization_thumb.png",
+    "screenShot": "https://www.webpagetest.org/result/250624_ZiDcA4_2T7/1_Cached_screen_thumb.png"
+  },
+  "images": {
+    "waterfall": "https://www.webpagetest.org/result/25/06/24/ZiDcA4/2T7/1_Cached_waterfall.png",
+    "connectionView": "https://www.webpagetest.org/result/25/06/24/ZiDcA4/2T7/1_Cached_connection.png",
+    "checklist": "https://www.webpagetest.org/result/25/06/24/ZiDcA4/2T7/1_Cached_optimization.png",
+    "screenShot": "https://www.webpagetest.org/getfile.php?test=250624_ZiDcA4_2T7&file=1_Cached_screen.jpg"
+  },
+  "breakdown": {
+    "html": {
+      "color": [
+        130,
+        181,
+        252
+      ],
+      "bytes": 50258,
+      "bytesUncompressed": 161736,
+      "requests": 1
+    },
+    "js": {
+      "color": [
+        254,
+        197,
+        132
+      ],
+      "bytes": 6884,
+      "bytesUncompressed": 24451,
+      "requests": 2
+    },
+    "css": {
+      "color": [
+        178,
+        234,
+        148
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    },
+    "image": {
+      "color": [
+        196,
+        154,
+        232
+      ],
+      "bytes": 54296,
+      "bytesUncompressed": 57842,
+      "requests": 3
+    },
+    "flash": {
+      "color": [
+        45,
+        183,
+        193
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    },
+    "font": {
+      "color": [
+        255,
+        82,
+        62
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    },
+    "video": {
+      "color": [
+        33,
+        194,
+        162
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    },
+    "other": {
+      "color": [
+        196,
+        196,
+        196
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    }
+  },
+  "loadTime": 1935,
+  "docTime": 1935,
+  "fullyLoaded": 2298,
+  "firstPaint": 1511,
+  "firstContentfulPaint": 1511,
+  "firstMeaningfulPaint": 1928,
+  "lastVisualChange": 2000,
+  "visualComplete": 2000,
+  "visualComplete85": 1500,
+  "visualComplete90": 1500,
+  "visualComplete95": 1600,
+  "visualComplete99": 2000,
+  "SpeedIndex": 1523,
+  "TotalBlockingTime": 16,
+  "navigationStart": 53,
+  "fetchStart": 22,
+  "domLoading": 772,
+  "responseEnd": 746,
+  "domInteractive": 1666,
+  "domContentLoadedEventStart": 1706,
+  "domContentLoadedEventEnd": 1706,
+  "domComplete": 1933,
+  "unloadEventStart": 763,
+  "unloadEventEnd": 763,
+  "markAsMainFrame": 764,
+  "commitNavigationEnd": 767,
+  "firstImagePaint": 1511,
+  "firstMeaningfulPaintCandidate": 1928,
+  "LayoutShift": 1535,
+  "loadEventStart": 1935,
+  "loadEventEnd": 1935,
+  "LargestTextPaint": 1511,
+  "LargestContentfulPaint": 1511,
+  "waterfall": "waterfall.png",
+  "connectionView": "connectionView.png",
+  "checklist": "checklist.png",
+  "screenShot": "screenShot.png",
+  "filmstripFrames": [
+    {
+      "time": 0,
+      "image": "filmstrip/ms_000000.jpg",
+      "VisuallyComplete": 0
+    },
+    {
+      "time": 1500,
+      "image": "filmstrip/ms_001500.jpg",
+      "VisuallyComplete": 93
+    },
+    {
+      "time": 1600,
+      "image": "filmstrip/ms_001600.jpg",
+      "VisuallyComplete": 96
+    },
+    {
+      "time": 2000,
+      "image": "filmstrip/ms_002000.jpg",
+      "VisuallyComplete": 100
+    }
+  ],
+  "filmstripImageData": {
+    "format": "jpeg",
+    "width": 360,
+    "height": 510,
+    "space": "b-w",
+    "channels": 1,
+    "depth": "uchar",
+    "density": 72,
+    "chromaSubsampling": "4:4:4",
+    "isProgressive": false,
+    "isPalette": false,
+    "hasProfile": false,
+    "hasAlpha": false,
+    "autoOrient": {
+      "width": 360,
+      "height": 510
+    }
+  },
+  "filmstripImageAspectRatio": "360 / 510",
+  "gifImageData": {
+    "format": "gif",
+    "width": 520,
+    "height": 680,
+    "space": "srgb",
+    "channels": 4,
+    "depth": "uchar",
+    "isProgressive": false,
+    "isPalette": true,
+    "bitsPerSample": 8,
+    "paletteBitDepth": 8,
+    "pages": 50,
+    "loop": 0,
+    "background": {
+      "r": 0,
+      "g": 255,
+      "b": 0
+    },
+    "hasProfile": false,
+    "hasAlpha": true,
+    "autoOrient": {
+      "width": 520,
+      "height": 680
+    }
+  },
+  "gifImageAspectRatio": "520 / 680"
+}

@@ -1,0 +1,755 @@
+{
+  "id": "250624_ZiDcQX_7GN",
+  "url": "https://benefitscal.com/",
+  "summary": "https://www.webpagetest.org/results.php?test=250624_ZiDcQX_7GN",
+  "testUrl": "https://benefitscal.com/",
+  "location": "IAD_US_01:Chrome",
+  "from": "Dulles, Virginia USA - <b>Chrome</b> - <b>Emulated Motorola G (gen 4)</b> - <b>4G</b>",
+  "connectivity": "4G",
+  "bwDown": 9000,
+  "bwUp": 9000,
+  "latency": 170,
+  "plr": null,
+  "shaperLimit": 0,
+  "mobile": 1,
+  "completed": 1750783905,
+  "testRuns": 3,
+  "testName": "benefits-cal",
+  "optimizedImages": true,
+  "crux": {
+    "key": {
+      "formFactor": "PHONE",
+      "url": "https://benefitscal.com/"
+    },
+    "metrics": {
+      "navigation_types": {
+        "fractions": {
+          "navigate": 0.4601,
+          "navigate_cache": 0.4548,
+          "reload": 0.0485,
+          "restore": 0,
+          "back_forward": 0.0015,
+          "back_forward_cache": 0.0024,
+          "prerender": 0.0327
+        }
+      },
+      "round_trip_time": {
+        "histogram": [
+          {
+            "start": 0,
+            "end": 75,
+            "density": 0.4255
+          },
+          {
+            "start": 75,
+            "end": 275,
+            "density": 0.5128
+          },
+          {
+            "start": 275,
+            "density": 0.0617
+          }
+        ],
+        "percentiles": {
+          "p75": 123
+        }
+      },
+      "experimental_time_to_first_byte": {
+        "histogram": [
+          {
+            "start": 0,
+            "end": 800,
+            "density": 0.857
+          },
+          {
+            "start": 800,
+            "end": 1800,
+            "density": 0.0972
+          },
+          {
+            "start": 1800,
+            "density": 0.0458
+          }
+        ],
+        "percentiles": {
+          "p75": 508
+        }
+      },
+      "interaction_to_next_paint": {
+        "histogram": [
+          {
+            "start": 0,
+            "end": 200,
+            "density": 0.5753
+          },
+          {
+            "start": 200,
+            "end": 500,
+            "density": 0.2938
+          },
+          {
+            "start": 500,
+            "density": 0.131
+          }
+        ],
+        "percentiles": {
+          "p75": 317
+        }
+      },
+      "largest_contentful_paint": {
+        "histogram": [
+          {
+            "start": 0,
+            "end": 2500,
+            "density": 0.4104
+          },
+          {
+            "start": 2500,
+            "end": 4000,
+            "density": 0.2412
+          },
+          {
+            "start": 4000,
+            "density": 0.3484
+          }
+        ],
+        "percentiles": {
+          "p75": 4965
+        }
+      },
+      "largest_contentful_paint_image_element_render_delay": {
+        "percentiles": {
+          "p75": 523
+        }
+      },
+      "largest_contentful_paint_image_resource_load_delay": {
+        "percentiles": {
+          "p75": 1502
+        }
+      },
+      "largest_contentful_paint_resource_type": {
+        "fractions": {
+          "image": 0.068,
+          "text": 0.932
+        }
+      },
+      "cumulative_layout_shift": {
+        "histogram": [
+          {
+            "start": "0.00",
+            "end": "0.10",
+            "density": 0.0664
+          },
+          {
+            "start": "0.10",
+            "end": "0.25",
+            "density": 0.0089
+          },
+          {
+            "start": "0.25",
+            "density": 0.9246
+          }
+        ],
+        "percentiles": {
+          "p75": "1.94"
+        }
+      },
+      "first_contentful_paint": {
+        "histogram": [
+          {
+            "start": 0,
+            "end": 1800,
+            "density": 0.3964
+          },
+          {
+            "start": 1800,
+            "end": 3000,
+            "density": 0.2933
+          },
+          {
+            "start": 3000,
+            "density": 0.3103
+          }
+        ],
+        "percentiles": {
+          "p75": 3431
+        }
+      },
+      "largest_contentful_paint_image_resource_load_duration": {
+        "percentiles": {
+          "p75": 94
+        }
+      },
+      "largest_contentful_paint_image_time_to_first_byte": {
+        "percentiles": {
+          "p75": 578
+        }
+      }
+    },
+    "collectionPeriod": {
+      "firstDate": {
+        "year": 2025,
+        "month": 5,
+        "day": 26
+      },
+      "lastDate": {
+        "year": 2025,
+        "month": 6,
+        "day": 22
+      }
+    }
+  },
+  "view": "firstView",
+  "run": "2",
+  "pages": {
+    "details": "https://www.webpagetest.org/result/250624_ZiDcQX_7GN/2/details/",
+    "checklist": "https://www.webpagetest.org/result/250624_ZiDcQX_7GN/2/performance_optimization/",
+    "breakdown": "https://www.webpagetest.org/result/250624_ZiDcQX_7GN/2/breakdown/",
+    "domains": "https://www.webpagetest.org/result/250624_ZiDcQX_7GN/2/domains/",
+    "screenShot": "https://www.webpagetest.org/result/250624_ZiDcQX_7GN/2/screen_shot/",
+    "opportunities": "https://www.webpagetest.org/result/250624_ZiDcQX_7GN/2/experiments/"
+  },
+  "thumbnails": {
+    "waterfall": "https://www.webpagetest.org/result/250624_ZiDcQX_7GN/2_waterfall_thumb.png",
+    "checklist": "https://www.webpagetest.org/result/250624_ZiDcQX_7GN/2_optimization_thumb.png",
+    "screenShot": "https://www.webpagetest.org/result/250624_ZiDcQX_7GN/2_screen_thumb.png"
+  },
+  "images": {
+    "waterfall": "https://www.webpagetest.org/result/25/06/24/ZiDcQX/7GN/2_waterfall.png",
+    "connectionView": "https://www.webpagetest.org/result/25/06/24/ZiDcQX/7GN/2_connection.png",
+    "checklist": "https://www.webpagetest.org/result/25/06/24/ZiDcQX/7GN/2_optimization.png",
+    "screenShot": "https://www.webpagetest.org/getfile.php?test=250624_ZiDcQX_7GN&file=2_screen.jpg"
+  },
+  "breakdown": {
+    "html": {
+      "color": [
+        130,
+        181,
+        252
+      ],
+      "bytes": 2423,
+      "bytesUncompressed": 7540,
+      "requests": 3
+    },
+    "js": {
+      "color": [
+        254,
+        197,
+        132
+      ],
+      "bytes": 4383149,
+      "bytesUncompressed": 22683915,
+      "requests": 232
+    },
+    "css": {
+      "color": [
+        178,
+        234,
+        148
+      ],
+      "bytes": 103647,
+      "bytesUncompressed": 1016436,
+      "requests": 9
+    },
+    "image": {
+      "color": [
+        196,
+        154,
+        232
+      ],
+      "bytes": 128441,
+      "bytesUncompressed": 176009,
+      "requests": 12
+    },
+    "flash": {
+      "color": [
+        45,
+        183,
+        193
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    },
+    "font": {
+      "color": [
+        255,
+        82,
+        62
+      ],
+      "bytes": 832148,
+      "bytesUncompressed": 832148,
+      "requests": 9
+    },
+    "video": {
+      "color": [
+        33,
+        194,
+        162
+      ],
+      "bytes": 0,
+      "bytesUncompressed": 0,
+      "requests": 0
+    },
+    "other": {
+      "color": [
+        196,
+        196,
+        196
+      ],
+      "bytes": 519917,
+      "bytesUncompressed": 1491581,
+      "requests": 17
+    }
+  },
+  "loadTime": 8908,
+  "docTime": 8908,
+  "fullyLoaded": 30186,
+  "firstPaint": 2319,
+  "firstContentfulPaint": 2819,
+  "firstMeaningfulPaint": 12918,
+  "lastVisualChange": 22800,
+  "visualComplete": 22800,
+  "visualComplete85": 22800,
+  "visualComplete90": 22800,
+  "visualComplete95": 22800,
+  "visualComplete99": 22800,
+  "SpeedIndex": 14980,
+  "TotalBlockingTime": 17655,
+  "navigationStart": 58,
+  "fetchStart": 33,
+  "domLoading": 829,
+  "responseEnd": 784,
+  "domInteractive": 8907,
+  "domContentLoadedEventStart": 8907,
+  "domContentLoadedEventEnd": 8907,
+  "domComplete": 8908,
+  "unloadEventStart": 817,
+  "unloadEventEnd": 817,
+  "markAsMainFrame": 820,
+  "commitNavigationEnd": 824,
+  "firstMeaningfulPaintCandidate": 12918,
+  "firstImagePaint": 2819,
+  "loadEventStart": 8908,
+  "loadEventEnd": 8908,
+  "LayoutShift": 22739,
+  "LargestImagePaint": 2819,
+  "LargestContentfulPaint": 2819,
+  "LargestTextPaint": 22824,
+  "waterfall": "waterfall.png",
+  "connectionView": "connectionView.png",
+  "checklist": "checklist.png",
+  "screenShot": "screenShot.png",
+  "filmstripFrames": [
+    {
+      "time": 0,
+      "image": "filmstrip/ms_000000.jpg",
+      "VisuallyComplete": 0
+    },
+    {
+      "time": 2700,
+      "image": "filmstrip/ms_002700.jpg",
+      "VisuallyComplete": 39
+    },
+    {
+      "time": 2800,
+      "image": "filmstrip/ms_002800.jpg",
+      "VisuallyComplete": 39
+    },
+    {
+      "time": 2900,
+      "image": "filmstrip/ms_002900.jpg",
+      "VisuallyComplete": 40
+    },
+    {
+      "time": 3000,
+      "image": "filmstrip/ms_003000.jpg",
+      "VisuallyComplete": 40
+    },
+    {
+      "time": 3100,
+      "image": "filmstrip/ms_003100.jpg",
+      "VisuallyComplete": 40
+    },
+    {
+      "time": 3200,
+      "image": "filmstrip/ms_003200.jpg",
+      "VisuallyComplete": 41
+    },
+    {
+      "time": 3300,
+      "image": "filmstrip/ms_003300.jpg",
+      "VisuallyComplete": 40
+    },
+    {
+      "time": 3400,
+      "image": "filmstrip/ms_003400.jpg",
+      "VisuallyComplete": 40
+    },
+    {
+      "time": 3500,
+      "image": "filmstrip/ms_003500.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 3600,
+      "image": "filmstrip/ms_003600.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 3700,
+      "image": "filmstrip/ms_003700.jpg",
+      "VisuallyComplete": 52
+    },
+    {
+      "time": 3800,
+      "image": "filmstrip/ms_003800.jpg",
+      "VisuallyComplete": 54
+    },
+    {
+      "time": 3900,
+      "image": "filmstrip/ms_003900.jpg",
+      "VisuallyComplete": 50
+    },
+    {
+      "time": 4000,
+      "image": "filmstrip/ms_004000.jpg",
+      "VisuallyComplete": 49
+    },
+    {
+      "time": 4100,
+      "image": "filmstrip/ms_004100.jpg",
+      "VisuallyComplete": 53
+    },
+    {
+      "time": 4200,
+      "image": "filmstrip/ms_004200.jpg",
+      "VisuallyComplete": 54
+    },
+    {
+      "time": 4300,
+      "image": "filmstrip/ms_004300.jpg",
+      "VisuallyComplete": 52
+    },
+    {
+      "time": 4400,
+      "image": "filmstrip/ms_004400.jpg",
+      "VisuallyComplete": 49
+    },
+    {
+      "time": 4500,
+      "image": "filmstrip/ms_004500.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 4600,
+      "image": "filmstrip/ms_004600.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 4700,
+      "image": "filmstrip/ms_004700.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 4800,
+      "image": "filmstrip/ms_004800.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 4900,
+      "image": "filmstrip/ms_004900.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 5000,
+      "image": "filmstrip/ms_005000.jpg",
+      "VisuallyComplete": 52
+    },
+    {
+      "time": 5100,
+      "image": "filmstrip/ms_005100.jpg",
+      "VisuallyComplete": 54
+    },
+    {
+      "time": 5200,
+      "image": "filmstrip/ms_005200.jpg",
+      "VisuallyComplete": 50
+    },
+    {
+      "time": 5300,
+      "image": "filmstrip/ms_005300.jpg",
+      "VisuallyComplete": 49
+    },
+    {
+      "time": 5400,
+      "image": "filmstrip/ms_005400.jpg",
+      "VisuallyComplete": 53
+    },
+    {
+      "time": 5500,
+      "image": "filmstrip/ms_005500.jpg",
+      "VisuallyComplete": 54
+    },
+    {
+      "time": 5600,
+      "image": "filmstrip/ms_005600.jpg",
+      "VisuallyComplete": 52
+    },
+    {
+      "time": 5700,
+      "image": "filmstrip/ms_005700.jpg",
+      "VisuallyComplete": 49
+    },
+    {
+      "time": 5800,
+      "image": "filmstrip/ms_005800.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 5900,
+      "image": "filmstrip/ms_005900.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 6000,
+      "image": "filmstrip/ms_006000.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 6100,
+      "image": "filmstrip/ms_006100.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 6200,
+      "image": "filmstrip/ms_006200.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 6300,
+      "image": "filmstrip/ms_006300.jpg",
+      "VisuallyComplete": 52
+    },
+    {
+      "time": 6400,
+      "image": "filmstrip/ms_006400.jpg",
+      "VisuallyComplete": 54
+    },
+    {
+      "time": 6500,
+      "image": "filmstrip/ms_006500.jpg",
+      "VisuallyComplete": 50
+    },
+    {
+      "time": 6600,
+      "image": "filmstrip/ms_006600.jpg",
+      "VisuallyComplete": 49
+    },
+    {
+      "time": 6700,
+      "image": "filmstrip/ms_006700.jpg",
+      "VisuallyComplete": 53
+    },
+    {
+      "time": 6800,
+      "image": "filmstrip/ms_006800.jpg",
+      "VisuallyComplete": 54
+    },
+    {
+      "time": 6900,
+      "image": "filmstrip/ms_006900.jpg",
+      "VisuallyComplete": 52
+    },
+    {
+      "time": 7000,
+      "image": "filmstrip/ms_007000.jpg",
+      "VisuallyComplete": 49
+    },
+    {
+      "time": 7100,
+      "image": "filmstrip/ms_007100.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 7200,
+      "image": "filmstrip/ms_007200.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 7300,
+      "image": "filmstrip/ms_007300.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 7400,
+      "image": "filmstrip/ms_007400.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 7500,
+      "image": "filmstrip/ms_007500.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 7600,
+      "image": "filmstrip/ms_007600.jpg",
+      "VisuallyComplete": 52
+    },
+    {
+      "time": 7700,
+      "image": "filmstrip/ms_007700.jpg",
+      "VisuallyComplete": 54
+    },
+    {
+      "time": 8000,
+      "image": "filmstrip/ms_008000.jpg",
+      "VisuallyComplete": 53
+    },
+    {
+      "time": 8500,
+      "image": "filmstrip/ms_008500.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 9000,
+      "image": "filmstrip/ms_009000.jpg",
+      "VisuallyComplete": 54
+    },
+    {
+      "time": 9500,
+      "image": "filmstrip/ms_009500.jpg",
+      "VisuallyComplete": 52
+    },
+    {
+      "time": 10000,
+      "image": "filmstrip/ms_010000.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 10500,
+      "image": "filmstrip/ms_010500.jpg",
+      "VisuallyComplete": 49
+    },
+    {
+      "time": 11000,
+      "image": "filmstrip/ms_011000.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 11500,
+      "image": "filmstrip/ms_011500.jpg",
+      "VisuallyComplete": 52
+    },
+    {
+      "time": 12000,
+      "image": "filmstrip/ms_012000.jpg",
+      "VisuallyComplete": 54
+    },
+    {
+      "time": 12500,
+      "image": "filmstrip/ms_012500.jpg",
+      "VisuallyComplete": 48
+    },
+    {
+      "time": 13000,
+      "image": "filmstrip/ms_013000.jpg",
+      "VisuallyComplete": 4
+    },
+    {
+      "time": 14000,
+      "image": "filmstrip/ms_014000.jpg",
+      "VisuallyComplete": 4
+    },
+    {
+      "time": 15000,
+      "image": "filmstrip/ms_015000.jpg",
+      "VisuallyComplete": 4
+    },
+    {
+      "time": 16000,
+      "image": "filmstrip/ms_016000.jpg",
+      "VisuallyComplete": 4
+    },
+    {
+      "time": 17000,
+      "image": "filmstrip/ms_017000.jpg",
+      "VisuallyComplete": 8
+    },
+    {
+      "time": 18000,
+      "image": "filmstrip/ms_018000.jpg",
+      "VisuallyComplete": 8
+    },
+    {
+      "time": 19000,
+      "image": "filmstrip/ms_019000.jpg",
+      "VisuallyComplete": 57
+    },
+    {
+      "time": 20000,
+      "image": "filmstrip/ms_020000.jpg",
+      "VisuallyComplete": 57
+    },
+    {
+      "time": 21000,
+      "image": "filmstrip/ms_021000.jpg",
+      "VisuallyComplete": 57
+    },
+    {
+      "time": 22000,
+      "image": "filmstrip/ms_022000.jpg",
+      "VisuallyComplete": 84
+    },
+    {
+      "time": 22800,
+      "image": "filmstrip/ms_022800.jpg",
+      "VisuallyComplete": 100
+    }
+  ],
+  "filmstripImageData": {
+    "format": "jpeg",
+    "width": 360,
+    "height": 510,
+    "space": "b-w",
+    "channels": 1,
+    "depth": "uchar",
+    "density": 72,
+    "chromaSubsampling": "4:4:4",
+    "isProgressive": false,
+    "isPalette": false,
+    "hasProfile": false,
+    "hasAlpha": false,
+    "autoOrient": {
+      "width": 360,
+      "height": 510
+    }
+  },
+  "filmstripImageAspectRatio": "360 / 510",
+  "gifImageData": {
+    "format": "gif",
+    "width": 520,
+    "height": 680,
+    "space": "srgb",
+    "channels": 4,
+    "depth": "uchar",
+    "isProgressive": false,
+    "isPalette": true,
+    "bitsPerSample": 8,
+    "paletteBitDepth": 8,
+    "pages": 258,
+    "loop": 0,
+    "background": {
+      "r": 0,
+      "g": 255,
+      "b": 0
+    },
+    "hasProfile": false,
+    "hasAlpha": true,
+    "autoOrient": {
+      "width": 520,
+      "height": 680
+    }
+  },
+  "gifImageAspectRatio": "520 / 680"
+}
