@@ -2,10 +2,10 @@
   "key": "YOUR_KEY_HERE",
   "ids": [
     "250624_ZiDcA4_2T7:infrequently",
-    "250624_YiDc0Q_2R1:bsky",
+    "250622_ZiDcHQ_461:bsky",
     "250624_ZiDcQX_7GN:benefits-cal"
   ],
-  "output": "./out",
+  "output": "./test/out",
   "rebuildTimelines": true,
   "optimizeImages": true,
   "prettyPrint": true,

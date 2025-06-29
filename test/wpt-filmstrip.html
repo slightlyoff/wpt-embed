@@ -7,63 +7,12 @@
       import "../src/components/wpt-embed.js";
     </script>
     <style>
-      wpt-embed::part(test-link) {
-        color: black;
+      :root {
+        font-family: "Roboto", "Segoe UI", sans-serif;
       }
-
-      /*
-      body {
-        timeline-scope: --scroller;
-      }
-
-      h2 {
-        position: absolute;
-        animation: rotate;
-        transform: rotate(var(--sa));
-        animation-timeline: --scroller;
-      }
-
-      @keyframes rotate {
-        from {
-          --sa: 0deg;
-        }
-        to {
-          --sa: 360deg;
-        }
-      }
-
-      #x-scroller {
-        position: relative;
-        top: 50px;
-        height: 30px;
-        max-width: 100%;
-        overflow-x: auto;
-        scroll-timeline-name: --scroller;
-        scroll-timeline-axis: x;
-      }
-
-      #wide {
-        width: 200vw;
-        height: 100%;
-        top: 0px;
-        left: 0px;
-        position: relative;
-        background-color: blue;
-        opacity: 0.3;
-      }
-      */
     </style>
   </head>
   <body>
-
-    <!-- 
-    <div style="position: sticky; left: 10px; top: 10px;">
-      <h2>Default</h2>
-      <div id="x-scroller">
-        <div id="wide"></div>
-      </div>
-    </div> 
-    -->
 
     <wpt-embed 
         size="large" 
@@ -77,7 +26,7 @@
         end="full"
         order="connections filmstrip waterfall breakdown crux">
       <wpt-test
-        timeline="../out/benefits-cal/runs/1/firstView/timeline.json"
+        timeline="./out/benefits-cal/runs/1/firstView/timeline.json"
         label="Dummy test with AVIF images and all data">
       </wpt-test>
     </wpt-embed> 
@@ -89,19 +38,19 @@
       breakdown="true"
       waterfall="true">
       <wpt-test
-        timeline="../out/infrequently/runs/1/firstView/timeline.json"
+        timeline="./out/infrequently/runs/1/firstView/timeline.json"
         label="A fast HTML website.">
         <a href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
           target="_new">infrequently.org, first load</a>
       </wpt-test>
       <wpt-test
-        timeline="../out/bsky/runs/2/firstView/timeline.json"
+        timeline="./out/bsky/runs/2/firstView/timeline.json"
         label="As slow React website.">
         <a href="https://www.webpagetest.org/results.php?test=250624_YiDc0Q_2R1"
           target="_new">bsky.app, first load</a>
       </wpt-test>
       <wpt-test
-        timeline="../out/benefits-cal/runs/1/firstView/timeline.json"
+        timeline="./out/benefits-cal/runs/1/firstView/timeline.json"
         label="A glacial React (etc.) website.">
         <a href="https://www.webpagetest.org/results.php?test=250624_ZiDcQX_7GN"
           target="_new">BenefitsCal, first load</a>
@@ -118,14 +67,14 @@
         connections="true" 
         breakdown="true">
       <wpt-test
-        timeline="../out/benefits-cal/runs/1/firstView/timeline.json"
+        timeline="./out/benefits-cal/runs/1/firstView/timeline.json"
         label="A glacial React (etc.) website.">
       </wpt-test>
     </wpt-embed>
 
     <wpt-embed size="small" debug>
       <wpt-test
-        timeline="../out/infrequently/runs/1/firstView/timeline.json"
+        timeline="./out/infrequently/runs/1/firstView/timeline.json"
         label="TEST">
         <a 
           href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
@@ -139,7 +88,7 @@
       connections="true"
       breakdown="true">
       <wpt-test
-        timeline="../out/infrequently/runs/1/firstView/timeline.json"
+        timeline="./out/infrequently/runs/1/firstView/timeline.json"
         label="TEST">
         <a 
           href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
@@ -149,7 +98,7 @@
    
     <wpt-embed size="small" interval="100ms">
       <wpt-test
-        timeline="../out/infrequently/runs/1/firstView/timeline.json"
+        timeline="./out/infrequently/runs/1/firstView/timeline.json"
         label="infrequently.org, first load">
         <a 
           href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
@@ -159,8 +108,9 @@
 
     <wpt-embed size="large" interval="100">
       <wpt-test
-        timeline="../out/infrequently/runs/3/firstView/timeline.json"
-        label="infrequently.org, first load, run 3">
+        run="2"
+        timeline="./out/infrequently/"
+        label="infrequently.org, first load, run 2">
         <a 
           href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
           target="_new">infrequently.org, first view, run 3</a>
@@ -174,14 +124,14 @@
       breakdown="true"
       id="pair-container">
       <wpt-test
-        test="../out/infrequently"
+        test="./out/infrequently"
         run="2"
         label="infrequently.org, first view">
         <a href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
           target="_new">infrequently.org, first view</a>
       </wpt-test>
       <wpt-test
-        test="../out/infrequently/"
+        test="./out/infrequently/"
         view="repeat"
         run="2"
         label="infrequently.org, repeat view">
@@ -231,7 +181,7 @@
       <!-- an inline version -->
       <wpt-test
         label="From inline'd data.">
-<script type="text/json" dir="../out/">
+<script type="text/json" dir="./out/">
 {
   "id": "250624_ZiDcA4_2T7",
   "testName": "infrequently",
@@ -459,5 +409,46 @@
 }
 </script>
       </wpt-test>
+  </wpt-embed>
+
+<!--
+<h2>For the docs:</h2>
+
+<wpt-embed 
+  size="small" 
+  interval="100ms"
+  waterfall="true"
+  connections="true">
+  <wpt-test run="1" test="./out/infrequently/"
+    label="infrequently.org, first load">
+  </wpt-test>
+</wpt-embed>
+
+<wpt-embed 
+  size="small" 
+  interval="100ms"
+  waterfall="true"
+  connections="true"
+  breakdown="true"
+  crux="true"
+  gif="true"
+  video="true">
+  <wpt-test run="1" test="./out/infrequently/"
+    label="infrequently.org, first load">
+  </wpt-test>
+  <wpt-test run="1" test="./out/infrequently/"
+    view="repeat"
+    label="infrequently.org, repeat view">
+  </wpt-test>
+</wpt-embed>
+
+<wpt-embed 
+  crux="true"
+  filmstrip="false">
+  <wpt-test run="1" test="./out/bsky/" label="Bluesky">
+  </wpt-test>
+</wpt-embed>
+-->
+
   </body>
 </html>
