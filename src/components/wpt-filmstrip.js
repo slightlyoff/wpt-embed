@@ -922,7 +922,7 @@ class WPTTest extends HTMLElement {
     if(inlineConfig && inlineConfig.hasAttribute("dir")) {
       let cfg = JSON.parse(inlineConfig.textContent);
       let dir = inlineConfig.getAttribute("dir");
-      let test = `${dir}${cfg.id}/runs/${cfg.run}/${cfg.view}/timeline.json`;
+      let test = `${dir}${cfg.testName || cfg.id}/runs/${cfg.run}/${cfg.view}/timeline.json`;
       this.data = cfg;
       this.avif = this.data.optimizedImages;
       this.#_timeline = test;

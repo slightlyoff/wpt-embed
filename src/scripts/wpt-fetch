@@ -66,7 +66,25 @@ let ebf = wrapEBF;
 
     // Create per-test output directories, then fetch results
     for (let testId of ids) {
+      let testName = testId;
       let testDir = join(outDir, testId);
+
+      // Handle renaming:
+      if(testId.includes(":")) {
+        let split = testId.split(":");
+        testId = split[0];
+        testName = split[1];
+        testDir = join(outDir, testId);
+        let newTestDir = join(outDir, testName);
+        try {
+          await fs.stat(testDir);
+          spinner.start(` Moving ${testDir} to ${newTestDir}`);
+          await fs.rename(testDir, newTestDir);
+          spinner.succeed(` Moving ${testDir} to ${newTestDir}`);
+        } catch (e) { }
+        testDir = newTestDir;
+      }
+
       if(opts.clean) {
         try {
           spinner.start(` Cleaning ${testDir}`);
@@ -127,6 +145,7 @@ let ebf = wrapEBF;
         baseData[k] = results[k];
       }
 
+      baseDatea.testName = testName;
       baseData.optimizedImages = opts.optimizeImages;
       baseData.crux = results?.runs["1"]?.firstView?.CrUX;
 
@@ -522,9 +541,15 @@ wpt-traces
             └── repeatView
                 └── ...
 
+If the provided trace ID includes a ":" charachter, the top-level directory will use the name after ":" instead.
+
 Example:
 
-    ./src/scripts/wpt-fetch -k <your_key> -o <out_dir> 240612_AiDcR6_9Y0
+    ./src/scripts/wpt-fetch --key <your_key> --output <out_dir> 240612_AiDcR6_9Y0
+
+With recommended settings and renaming:
+
+    ./src/scripts/wpt-fetch --optimize --rebuild-timelines --key <your_key> --output <out_dir> 240612_AiDcR6_9Y0:short-name
 
 Example with JSON configuration:
 
