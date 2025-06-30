@@ -701,7 +701,6 @@ class WPTEmbed extends HTMLElement {
     // Get the maximum duration
     let durations = this.#tests.map((t) => { return t.duration; })
     let end = Math.max(...durations) + this.#_intervalMs;
-    // TODO: can this cut off the last frame?
     let timings = [];
     for(let x=0; x <= end; x+=this.#_intervalMs) {
       timings.push(this.getTimingFor(x));
@@ -1411,7 +1410,7 @@ class WPTTest extends HTMLElement {
         while(
           (framesMeta[0].time < cutoff) &&
           (framesMeta[1]) &&
-          (framesMeta[1].time < cutoff)
+          (framesMeta[1].time <= cutoff)
         ) {
           framesMeta.shift();
         }

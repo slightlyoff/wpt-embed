@@ -109,7 +109,7 @@
     <wpt-embed size="large" interval="100">
       <wpt-test
         run="2"
-        timeline="./out/infrequently/"
+        tet="./out/infrequently/"
         label="infrequently.org, first load, run 2">
         <a 
           href="https://www.webpagetest.org/results.php?test=250624_ZiDcA4_2T7"
@@ -446,6 +446,15 @@
   crux="true"
   filmstrip="false">
   <wpt-test run="1" test="./out/bsky/" label="Bluesky">
+  </wpt-test>
+</wpt-embed>
+
+<wpt-embed 
+  size="small" 
+  interval="100ms"
+  end="lcp">
+  <wpt-test run="1" test="./out/infrequently/"
+    label="infrequently.org, first load">
   </wpt-test>
 </wpt-embed>
 -->
