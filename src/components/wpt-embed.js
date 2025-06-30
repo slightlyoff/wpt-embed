@@ -1333,7 +1333,7 @@ class WPTTest extends HTMLElement {
     // new ....toLocaleDateString("en", )
     let isMobile = (cd.key.formFactor == "PHONE");
     let host = (new URL(this.data.crux.key.url)).host;
-    qs(ct, ".details").textContent = `Web Vitals data for ${ host } — collected from Chrome ${ isMobile ? "mobile" : "desktop" } users, ${startDate} to ${endDate}`;
+    qs(ct, ".details").textContent = `Web Vitals data for ${ host }. Collected from Chrome ${ isMobile ? "mobile" : "desktop" } users, ${startDate} – ${endDate}.`;
   }
 
 
