@@ -112,6 +112,22 @@ let templateFor = (str) => {
   return document.body.lastElementChild.content;
 };
 
+// This is a lot of alloc, but it's cheaper that Intl
+let kbFormat = (kb=0) => {
+  if(!kb || kb < 1) { return Math.round(kb) + " kB"; }
+  let kbs = Math.round(kb) + "";
+  let segments = [];
+  let len = kbs.length;
+  while(len > 3) {
+    segments.unshift(kbs.slice(-3));
+    kbs = kbs.slice(0, len - 3);
+    len = kbs.length;
+  }
+  segments.unshift(kbs);
+  let ret = segments.join(",") + " kB";
+  return ret;
+};
+
 class WPTEmbed extends HTMLElement {
 
   static observedAttributes = [
@@ -562,9 +578,11 @@ class WPTEmbed extends HTMLElement {
     }
   }
 
-  #_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: 1 });
+  // FIXME(slightlyoff): very slow to initialize
+  // #_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: 1 });
   #_intervalMs = 100;
   #_interval = "100";
+  #_mfd = 1;
   set interval(i) {
     let oldIntervalMS = this.#_intervalMs;
     if(typeof i === "number") {
@@ -576,44 +594,54 @@ class WPTEmbed extends HTMLElement {
       case "16ms":
       case "60fps":
         this.#_intervalMs = 16;
-        mfd = 3;
+        this.#_mfd = 3;
         break;
       case "1000":
       case "1000ms":
       case "1s":
         this.#_intervalMs = 1000;
-        mfd = 0;
+        this.#_mfd = 0;
         break;
       case "5000":
       case "5000ms":
       case "5s":
         this.#_intervalMs = 5000;
-        mfd = 0;
+        this.#_mfd = 0;
         break;
       case "500":
       case "500ms":
       case "0.5s":
         this.#_intervalMs = 500;
-        mfd = 1;
+        this.#_mfd = 1;
         break;
       case "100":
       case "100ms":
       case "0.1s":
       default:
         this.#_intervalMs = 100;
-        mfd = 1;
+        this.#_mfd = 1;
         break;
     }
-    this.#_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: mfd });
+    // this.#_tf = Intl.NumberFormat("en-US", { 
+    //   minimumFractionDigits: this.#_mfd 
+    // });
     if (this.#_intervalMs !== oldIntervalMS) {
       this.updateTests();
     }
   }
   get interval() { return this.#_interval; }
+  // TODO: caching
   getTimingFor(ms=0) {
     let td = document.createElement("td");
     let s = document.createElement("span");
-    s.innerText = this.#_tf.format(ms / 1000)+"s";
+    // Build format string
+    let int = Math.trunc(ms / 1000);
+    let rem = Math.abs(int ? ((1000 * int) - ms) : ms);
+    let num = int+"";
+    if(this.#_mfd) {
+      num += "." + (rem + "").padEnd("0", this.#_mfd).substring(0, this.#_mfd);
+    } 
+    s.innerText = num;
     td.appendChild(s);
     return td;
   }
@@ -695,11 +723,13 @@ class WPTEmbed extends HTMLElement {
     return el;
   }
 
-  // TODO: fix renders before we have data for all tracks
   updateTests() {
     if(!this.#wired) { return; }
+    let tests = this.#tests;
+    // Avoid rendering if we don't have all the data
+    for(let x of tests) { if(!x.data) return; }
     // Get the maximum duration
-    let durations = this.#tests.map((t) => { return t.duration; })
+    let durations = tests.map((t) => { return t.duration; })
     let end = Math.max(...durations) + this.#_intervalMs;
     let timings = [];
     for(let x=0; x <= end; x+=this.#_intervalMs) {
@@ -1143,12 +1173,6 @@ class WPTTest extends HTMLElement {
       </tbody>
     </table>
   `);
-  #kbFormatter = new Intl.NumberFormat('en', {
-    style: 'unit',
-    unit: 'kilobyte',
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-  });
 
   #breakdown = null;
   renderBreakdownInto(container) {
@@ -1186,8 +1210,8 @@ class WPTTest extends HTMLElement {
       // if(v.bytes === 0) { continue; }
       let r = rt.cloneNode(true);
       r.firstElementChild.textContent = k;
-      r.children[1].textContent = this.#kbFormatter.format(v.bytes / 1000);
-      r.children[2].textContent = this.#kbFormatter.format(v.bytesUncompressed / 1000);
+      r.children[1].textContent = kbFormat(v.bytes / 1000);
+      r.children[2].textContent = kbFormat(v.bytesUncompressed / 1000);
       r.children[3].textContent = v["requests"];
       bdt.tBodies[0].appendChild(r);
     }
