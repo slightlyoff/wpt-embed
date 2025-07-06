@@ -315,6 +315,10 @@
   "visualComplete99": 15500,
   "SpeedIndex": 14815,
   "TotalBlockingTime": 17080,
+  "layoutShifts": [],
+  "lcps": [
+    14507
+  ],
   "navigationStart": 49,
   "fetchStart": 24,
   "domLoading": 828,
@@ -410,12 +414,8 @@
     "height": 510,
     "space": "b-w",
     "channels": 1,
-    "depth": "uchar",
     "density": 72,
-    "chromaSubsampling": "4:4:4",
     "isProgressive": false,
-    "isPalette": false,
-    "hasProfile": false,
     "hasAlpha": false,
     "autoOrient": {
       "width": 360,
@@ -429,8 +429,6 @@
     "height": 680,
     "space": "srgb",
     "channels": 4,
-    "depth": "uchar",
-    "isProgressive": false,
     "isPalette": true,
     "bitsPerSample": 8,
     "paletteBitDepth": 8,
@@ -441,8 +439,6 @@
       "g": 255,
       "b": 0
     },
-    "hasProfile": false,
-    "hasAlpha": true,
     "autoOrient": {
       "width": 520,
       "height": 680

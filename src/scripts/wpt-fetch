@@ -290,11 +290,194 @@ let ebf = wrapEBF;
           ].forEach((v) => {
             viewData[v] = run[view][v];
           });
+          viewData.layoutShifts = [];
+          viewData.lcps = [];
           if(run[view].chromeUserTiming) {
             run[view].chromeUserTiming.forEach((e) => {
-              viewData[e.name] = e.time;
+              switch(e.name) {
+                case "LargestContentfulPaint":
+                  viewData.lcps.push(e.time);
+                  break;
+                case "LayoutShift":
+                  viewData.layoutShifts.push(e.time);
+                  break;
+                default:
+                  viewData[e.name] = e.time;
+                  break;
+              }
             });
+            // Compat with old layout
+            viewData.LargestContentfulPaint = viewData.lcps.at(-1);
           }
+
+          // 
+          // TODO
+          //
+
+          // Grab a subset of the timings
+          /*
+          // run[view]
+          //
+            "chromeUserTiming": [
+              {
+                "name": "navigationStart",
+                "time": 25
+              },
+              {
+                "name": "fetchStart",
+                "time": 33
+              },
+              {
+                "name": "navigationStart",
+                "time": 58
+              },
+              {
+                "name": "domLoading",
+                "time": 59
+              },
+              {
+                "name": "responseEnd",
+                "time": 59
+              },
+              {
+                "name": "domInteractive",
+                "time": 59
+              },
+              {
+                "name": "domContentLoadedEventStart",
+                "time": 59
+              },
+              {
+                "name": "domContentLoadedEventEnd",
+                "time": 59
+              },
+              {
+                "name": "domComplete",
+                "time": 59
+              },
+              {
+                "name": "responseEnd",
+                "time": 784
+              },
+              {
+                "name": "unloadEventStart",
+                "time": 817
+              },
+              {
+                "name": "unloadEventEnd",
+                "time": 817
+              },
+              {
+                "name": "markAsMainFrame",
+                "time": 820
+              },
+              {
+                "name": "commitNavigationEnd",
+                "time": 824
+              },
+              {
+                "name": "domLoading",
+                "time": 829
+              },
+              {
+                "name": "firstMeaningfulPaintCandidate",
+                "time": 2319
+              },
+              {
+                "name": "firstPaint",
+                "time": 2319
+              },
+              {
+                "name": "firstContentfulPaint",
+                "time": 2819
+              },
+              {
+                "name": "firstImagePaint",
+                "time": 2819
+              },
+              {
+                "name": "domInteractive",
+                "time": 8907
+              },
+              {
+                "name": "domContentLoadedEventStart",
+                "time": 8907
+              },
+              {
+                "name": "domContentLoadedEventEnd",
+                "time": 8907
+              },
+              {
+                "name": "domComplete",
+                "time": 8908
+              },
+              {
+                "name": "loadEventStart",
+                "time": 8908
+              },
+              {
+                "name": "loadEventEnd",
+                "time": 8908
+              },
+              {
+                "name": "firstMeaningfulPaintCandidate",
+                "time": 12918
+              },
+              {
+                "name": "firstMeaningfulPaint",
+                "time": 12918
+              },
+              {
+                "name": "firstMeaningfulPaint",
+                "time": 12918
+              },
+              {
+                "name": "LayoutShift",
+                "time": 12928
+              },
+              {
+                "name": "LayoutShift",
+                "time": 13360
+              },
+              {
+                "name": "LayoutShift",
+                "time": 13538
+              },
+              {
+                "name": "LayoutShift",
+                "time": 16062
+              },
+              {
+                "name": "LayoutShift",
+                "time": 21913
+              },
+              {
+                "name": "LayoutShift",
+                "time": 22739
+              },
+              {
+                "name": "LargestImagePaint",
+                "time": 2819
+              },
+              {
+                "name": "LargestContentfulPaint",
+                "time": 2819
+              },
+              {
+                "name": "LargestTextPaint",
+                "time": 22824
+              },
+              {
+                "name": "TotalLayoutShift",
+                "value": 1.2098869250880349
+              },
+              {
+                "name": "CumulativeLayoutShift",
+                "value": 1
+              }
+            ],
+          */
+
           
           let viewDir = join(testDir, "runs", r, view);
           await fs.mkdir(join(viewDir, "filmstrip"), { recursive: true });
@@ -339,6 +522,10 @@ let ebf = wrapEBF;
           if(meta.length > 1) {
             let img0 = sharp(meta[0].path);
             let md = await img0.metadata();
+            delete md.depth;
+            delete md.chromaSubsampling;
+            delete md.isPalette;
+            delete md.hasProfile;
             viewData.filmstripImageData = Object.assign({}, md);
             viewData.filmstripImageAspectRatio = `${md.width} / ${md.height}`;
           }
@@ -411,6 +598,10 @@ let ebf = wrapEBF;
           let md = await gif.metadata();
           let id = Object.assign({}, md);
           delete id.delay;
+          delete id.depth;
+          delete id.isProgressive;
+          delete id.hasProfile;
+          delete id.hasAlpha;
           viewData.gifImageData = id;
           viewData.gifImageAspectRatio = `${md.width} / ${md.height}`;
 

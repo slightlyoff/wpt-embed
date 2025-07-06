@@ -316,6 +316,14 @@
   "visualComplete99": 22700,
   "SpeedIndex": 14897,
   "TotalBlockingTime": 20707,
+  "layoutShifts": [
+    15904,
+    20439,
+    22651
+  ],
+  "lcps": [
+    22702
+  ],
   "navigationStart": 61,
   "fetchStart": 30,
   "domLoading": 758,
@@ -330,12 +338,11 @@
   "commitNavigationEnd": 742,
   "firstMeaningfulPaintCandidate": 12404,
   "firstImagePaint": 12404,
-  "LayoutShift": 22651,
   "loadEventStart": 24325,
   "loadEventEnd": 24331,
-  "LargestContentfulPaint": 22702,
   "LargestTextPaint": 22702,
   "LargestImagePaint": 12404,
+  "LargestContentfulPaint": 22702,
   "waterfall": "waterfall.png",
   "connectionView": "connectionView.png",
   "checklist": "checklist.png",
@@ -703,12 +710,8 @@
     "height": 510,
     "space": "b-w",
     "channels": 1,
-    "depth": "uchar",
     "density": 72,
-    "chromaSubsampling": "4:4:4",
     "isProgressive": false,
-    "isPalette": false,
-    "hasProfile": false,
     "hasAlpha": false,
     "autoOrient": {
       "width": 360,
@@ -722,8 +725,6 @@
     "height": 680,
     "space": "srgb",
     "channels": 4,
-    "depth": "uchar",
-    "isProgressive": false,
     "isPalette": true,
     "bitsPerSample": 8,
     "paletteBitDepth": 8,
@@ -734,8 +735,6 @@
       "g": 255,
       "b": 0
     },
-    "hasProfile": false,
-    "hasAlpha": true,
     "autoOrient": {
       "width": 520,
       "height": 680
