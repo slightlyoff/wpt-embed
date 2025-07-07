@@ -2,6 +2,7 @@
  * TODO:
  *
  * - pie charts in breakdown
+ * - CPU and interactive charts
  * - Highlight low compression ratios and large payloads
  * - theme support
  * - filmstrip styling for timeline events:
@@ -10,12 +11,19 @@
  * - options to display connection and device params
  * - sync'd scroll for timeline and waterfall/connections
  * - "play" button?
+ * - data sharing back-plane
  */
+let ver = `
+wpt-embed.js, 0.2.15
+Copyright 2024-2025
+Alex Russell -- infrequently.org
+Licensed under the MIT license.
+`;
 
-// Dummy for syntax highlighting
+// For lit syntax highlighting
 let css = function(strs, subs) {
  if (strs?.length > 1 || subs?.length > 1) {
-  console.error("`css` tag called with values, which should not happen"); 
+  throw "`css` tag called with values"; 
  }
  return strs[0];
 } 
@@ -90,13 +98,13 @@ let addStyles = (doc, styles) => {
 }
 
 let toCamelCase = (() => {
-  let _c = new Map();
+  let _c = new Map(); // Cache
   return (s) => {
-    let _s = _c.get(s);
+    let _s = _c.get(s); // TODO: benchmark
     if (_s) { return _s; }
     _s = s.replace(/(-)+([a-z]?)/g, (m, g0, g1, offset) => {
       let c = m[m.length-1];
-      if(!offset) return c;
+      if(!offset) { return c; }
       return (c === "-") ? "" : c.toUpperCase();
     });
     _c.set(s, _s);
@@ -105,14 +113,13 @@ let toCamelCase = (() => {
 })();
 
 let templateFor = (str) => {
-  document.body.insertAdjacentHTML(
-    "beforeend", 
-    `<template>${str}</template>`
-  );
-  return document.body.lastElementChild.content;
+  // No caching because this is only called by statics
+  let t = document.createElement("template");
+  t.innerHTML = str;
+  return t.content;
 };
 
-// This is a lot of alloc, but it's cheaper that Intl
+// This is a lot of alloc, but it's cheaper than Intl init
 let kbFormat = (kb=0) => {
   if(!kb || kb < 1) { return Math.round(kb) + " kB"; }
   let kbs = Math.round(kb) + "";
@@ -146,409 +153,410 @@ class WPTEmbed extends HTMLElement {
   ];
 
   static styles = css`
-    /* A wee reset */
-    h1, h2, h3, h4, p, figure, blockquote, dl, dd {
-      margin-block-end: 0;
-      margin-block-start: 0;
-    }
-    h1, h2, h3, h4 {
-      text-wrap: balance;
+  /* A wee reset */
+  h1, h2, h3, h4, p, figure, blockquote, dl, dd {
+    margin-block-end: 0;
+    margin-block-start: 0;
+  }
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  :host {
+    timeline-scope: --wpt-embed-scroller;
+
+    --wpt-image-width: var(--image-width, 100px);
+    --wpt-progress-line-color: transparent;
+    --wpt-progress-line-width: 0px;
+
+    @supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+      --wpt-progress-line-color: red;
+      --wpt-progress-line-width: 2px;
     }
 
+    --wpt-section-padding: 1rem 0;
+
+    /* TODO:
+    --wpt-no-change-border-color: transparent;
+    --wpt-visual-change-border-color: yellow;
+    --wpt-lcp-border-color: red;
+    */
+  }
+
+  :host([debug]) {
     * {
-      box-sizing: border-box;
+      outline: 1px solid blue;
     }
+    outline: 2px dotted red;
+  }
+  
+  /**************
+    * 
+    * All sections
+    * 
+    **/
 
-    :host {
-      timeline-scope: --wpt-embed-scroller;
+  :host {
+    display: flex;
+    flex-direction: column;
+  }
 
-      --wpt-image-width: var(--image-width, 100px);
-      --wpt-progress-line-color: transparent;
-      --wpt-progress-line-width: 0px;
+  :host > div {
+    width: 100%;
+    margin: var(--wpt-section-padding);
 
-      @supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
-        --wpt-progress-line-color: red;
-        --wpt-progress-line-width: 2px;
-      }
+    /* center */
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
 
-      --wpt-section-padding: 1rem 0;
+  caption,
+  figcaption {
+    text-align: center;
+    margin: 0.25em 0;
+  }
 
-      /* TODO:
-      --wpt-no-change-border-color: transparent;
-      --wpt-visual-change-border-color: yellow;
-      --wpt-lcp-border-color: red;
-      */
-    }
+  table {
+    border-collapse: collapse;
+  }
 
-    :host([debug]) {
-      * {
-        outline: 1px solid blue;
-      }
-      outline: 2px dotted red;
-    }
-    
-    /**************
-     * 
-     * All sections
-     * 
-     **/
+  figure {
+    margin: 0;
+    padding: 0;
+  }
 
-    :host {
-      display: flex;
-      flex-direction: column;
-    }
+  /**************
+    * 
+    * Filmstrip section
+    * 
+    ***/
+  
+  #filmstrip {
+    overflow-x: auto;
+    display: block;
+    position: relative;
+    scrollbar-gutter: stable;
 
-    :host > div {
-      width: 100%;
-      margin: var(--wpt-section-padding);
+    scroll-timeline-axis: x;
+    scroll-timeline-name: --wpt-embed-scroller;
+  }
 
-      /* center */
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-
-    caption,
-    figcaption {
-      text-align: center;
-      margin: 0.25em 0;
-    }
-
-    table {
-      border-collapse: collapse;
-    }
-
-    figure {
-      margin: 0;
-      padding: 0;
-    }
-
-    /**************
-     * 
-     * Filmstrip section
-     * 
-     ***/
-    
+  /* TODO: elide when there's no filmstrip */
+  :host([waterfall]),
+  :host([connections]) {
     #filmstrip {
-      overflow-x: auto;
-      display: block;
-      position: relative;
-      scrollbar-gutter: stable;
+      border-left: var(--wpt-progress-line-width) solid var(--wpt-progress-line-color);
+    }
+    #filmstrip.hidden { display: none; }
+  }
 
-      scroll-timeline-axis: x;
-      scroll-timeline-name: --wpt-embed-scroller;
+  #main-table {
+    width: 100%;
+    top: 0px;
+    left: 0px;
+    /* TODO: not working in FF */
+    margin-right: calc(100%);
+  }
+
+  .filmstrip-row {
+    width: 100%;
+
+    & img {
+      margin-inline: 2px;
+      outline: 1px solid black;
+      content-visibility: auto;
     }
 
-    /* TODO: elide when there's no filmstrip */
-    :host([waterfall]),
-    :host([connections]) {
-      #filmstrip {
-        border-left: var(--wpt-progress-line-width) solid var(--wpt-progress-line-color);
-      }
-      #filmstrip.hidden { display: none; }
-    }
-
-    #main-table {
-      width: 100%;
-      top: 0px;
-      left: 0px;
-      /* TODO: not working in FF */
-      margin-right: calc(100%);
-    }
-
-    .filmstrip-row {
-      width: 100%;
-
-      & img {
-        border: 1px solid black;
-        content-visibility: auto;
-      }
-
-      & .pct {
-        text-align: center;
-      }
-    }
-
-    .meta {
-      text-align: left;
-    }
-
-    .labels {
-      position: sticky;
-      display: inline-block;
-      top: 0px;
-      left: 0px;
-      padding: 0.5rem;
-    }
-
-    #timing td {
+    & .pct {
       text-align: center;
     }
 
-    :host([size="small"]) {
-      --wpt-image-width: 50px;
+    & .visualChange > img {
+      outline: var(
+        --wpt-visual-change-outline,
+        2px solid #ffc233
+      );
     }
 
-    :host([size="medium"]) {
-      --wpt-image-width: 100px;
+    & .lcp > img {
+      outline: var(--wpt-lcp-outline, 2px solid #ff0000);
     }
 
-    :host([size="large"]) {
-      --wpt-image-width: 200px;
+    & .layoutShift.visualChange > img {
+      outline: var(
+        --wpt-layout-shift-visual-change-outline, 
+        2px dotted #ffc233
+      );
     }
-
-    .filmstrip-row img {
-      width: var(--wpt-image-width, 100px);
-      contain-intrinsic-width: var(--wpt-image-width, 100px);
-      aspect-ratio: var(--wpt-aspect-ratio);
+    & .layoutShift.lcp > img {
+      outline: var(
+        --wpt-layout-shift-lcp-outline, 
+        2px dotted #ff0000
+      );
     }
+  }
 
-    .filmstrip-meta {
-      padding: 1em;
+  .meta {
+    text-align: left;
+  }
+
+  .labels {
+    position: sticky;
+    display: inline-block;
+    top: 0px;
+    left: 0px;
+    padding: 0.5rem;
+  }
+
+  #timing td {
+    text-align: center;
+  }
+
+  :host([size="small"]) {
+    --wpt-image-width: 50px;
+  }
+
+  :host([size="medium"]) {
+    --wpt-image-width: 100px;
+  }
+
+  :host([size="large"]) {
+    --wpt-image-width: 200px;
+  }
+
+  .filmstrip-row img {
+    width: var(--wpt-image-width, 100px);
+    contain-intrinsic-width: var(--wpt-image-width, 100px);
+    aspect-ratio: var(--wpt-aspect-ratio);
+  }
+
+  .filmstrip-meta {
+    padding: 1em;
+  }
+
+  :host > div.hidden { 
+    display: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  @keyframes scrollTransform {
+    from {
+      --wpt-scroll-pct: 0%;
     }
+    to {
+      --wpt-scroll-pct: 100%;
+    }
+  }
 
-    :host > div.hidden { 
-      display: none;
+  /**************
+    * 
+    * Breakdown table and charts section
+    * 
+    ***/
+
+  #breakdown {
+
+    & > table {
+      min-width: 20rem;
+      width: 100%;
+      max-width: 35rem;
+      border-collapse: collapse;
+      border: 1px solid #dddddd;
       margin: 0;
-      padding: 0;
-    }
 
-    @keyframes scrollTransform {
-      from {
-        --wpt-scroll-pct: 0%;
+      & > caption {
+        caption-side: bottom;
       }
-      to {
-        --wpt-scroll-pct: 100%;
+
+      & td, th {
+        padding: 0.5em 0.35em;
       }
-    }
 
-    /**************
-     * 
-     * Breakdown table and charts section
-     * 
-     ***/
-
-    #breakdown {
-
-      & > table {
-        min-width: 20rem;
-        width: 100%;
-        max-width: 35rem;
-        border-collapse: collapse;
-        border: 1px solid #dddddd;
-        margin: 0;
-
-        & > caption {
-          caption-side: bottom;
+      & > thead {
+        background-color: gainsboro;
+        text-align: center;
+        color: var(--wpt-breakdown-even-color, inherit);
+      }
+      & > tbody {
+        & > tr {
+            border-bottom: 1px solid #dddddd;
         }
 
-        & td, th {
-          padding: 0.5em 0.35em;
-        }
-
-        & > thead {
-          background-color: gainsboro;
-          text-align: center;
+        & > tr:nth-of-type(even) {
+          background-color: #f3f3f3;
           color: var(--wpt-breakdown-even-color, inherit);
         }
-        & > tbody {
-          & > tr {
-              border-bottom: 1px solid #dddddd;
-          }
 
-          & > tr:nth-of-type(even) {
-            background-color: #f3f3f3;
-            color: var(--wpt-breakdown-even-color, inherit);
-          }
-
-          & th {
-            text-align: left;
-          }
-          & td {
-            text-align: right;
-          }
+        & th {
+          text-align: left;
+        }
+        & td {
+          text-align: right;
         }
       }
     }
+  }
 
-    /**************
-     * 
-     * CrUX data
-     * 
-     ***/
-    #crux {
-      flex-direction: column;
-      font-size: 0.8rem;
+  /**************
+    * 
+    * CrUX data
+    * 
+    ***/
+  #crux {
+    flex-direction: column;
+    font-size: 0.8rem;
 
-      & > .crux {
-        width: 100%;
-
-        & > .metric {
-          width: 100%;
-          margin: 2em 0;
-
-          & .title {
-            opacity: 0.7;
-          }
-
-          & .value{
-            font-weight: 900;
-            font-size: 2em;
-            line-height: 1;
-            margin: 0.2em 0;
-          }
-
-          & .pct{
-            margin: 0.2em 0;
-          }
-
-          --good: var(--wpt-crux-good, rgb(12, 206, 107));
-          --fair: var(--wpt-crux-fair, rgb(255, 164, 0));
-          --poor: var(--wpt-crux-poor, rgb(255, 78, 66));
-
-          /* TODO: themes & contrast */
-          & .good {
-            background-color: var(--good);
-            color: white;
-          }
-          & .fair {
-            background-color: var(--fair);
-          }
-          & .poor {
-            background-color: var(--poor);
-            color: white;
-          }
-
-          & .value {
-            background-color: inherit;
-            &.good { color: var(--good); }
-            &.fair { color: var(--fair); }
-            &.poor { color: var(--poor); }
-          }
-          & > ul {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            width: 100%;
-
-            & > li {
-              line-height: 2.2;
-              text-indent: 0.8em;
-
-            }
-          }
-
-          & > .thresholds {
-            display: flex;
-
-            & > div {
-              padding: 0.2em 0.8em;
-
-              & > .key {
-                display: inline-block;
-                width: 1.5em;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    /**************
-     * 
-     * Waterfall and Connections sections
-     * 
-     ***/
-
-    /*
-     * These images are all 1012px wide, with insets for legends, 
-     * resource names, and utilization (at the bottom). For our 
-     * following red line, we need to place it with offsets relative 
-     * to how the image is scaled.
-     */
-
-    #waterfall,
-    #connections {
-      align-items: inherit;
-      overflow-x: auto;
+    & > .crux {
       width: 100%;
-      --wpt-start-stop: 0.24;
 
-      & picture {
+      & > .metric {
+        width: 100%;
+        margin: 2em 0;
+
+        & .title {
+          opacity: 0.7;
+        }
+
+        & .value{
+          font-weight: 900;
+          font-size: 2em;
+          line-height: 1;
+          margin: 0.2em 0;
+        }
+
+        & .pct{
+          margin: 0.2em 0;
+        }
+
+        --good: var(--wpt-crux-good, rgb(12, 206, 107));
+        --fair: var(--wpt-crux-fair, rgb(255, 164, 0));
+        --poor: var(--wpt-crux-poor, rgb(255, 78, 66));
+
+        /* TODO: themes & contrast */
+        & .good {
+          background-color: var(--good);
+          color: white;
+        }
+        & .fair {
+          background-color: var(--fair);
+        }
+        & .poor {
+          background-color: var(--poor);
+          color: white;
+        }
+
+        & .value {
+          background-color: inherit;
+          &.good { color: var(--good); }
+          &.fair { color: var(--fair); }
+          &.poor { color: var(--poor); }
+        }
+        & > ul {
+          list-style: none;
+          padding: 0;
+          display: flex;
+          width: 100%;
+
+          & > li {
+            line-height: 2.2;
+            text-indent: 0.8em;
+
+          }
+        }
+
+        & > .thresholds {
+          display: flex;
+
+          & > div {
+            padding: 0.2em 0.8em;
+
+            & > .key {
+              display: inline-block;
+              width: 1.5em;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**************
+    * 
+    * Waterfall and Connections sections
+    * 
+    ***/
+
+  #waterfall,
+  #connections {
+    align-items: inherit;
+    overflow-x: auto;
+    width: 100%;
+    --wpt-start-stop: 0.24;
+
+    & picture {
+      width: 100%;
+      max-width: 1012px;
+      display: inline-block;
+      position: relative;
+      contain: content;
+      margin: 0;
+      padding: 0;
+      border: 0;
+
+      --es-tl: var(--wpt-test-length);
+      --es-lt: var(--wpt-longest-test, 1);
+      --wpt-end-stop: calc(var(--es-tl) / var(--es-lt) * 100%);
+
+      & > img {
         width: 100%;
         max-width: 1012px;
-        display: inline-block;
-        position: relative;
-        contain: content;
-        margin: 0;
-        padding: 0;
-        border: 0;
-
-        --es-tl: var(--wpt-test-length);
-        --es-lt: var(--wpt-longest-test, 1);
-        --wpt-end-stop: calc(var(--es-tl) / var(--es-lt) * 100%);
-
-        & > img {
-          width: 100%;
-          max-width: 1012px;
-        }
-      }
-
-      & picture::after {
-        content: "";
-        display: block;
-        z-index: 1;
-        position: absolute;
-        display: block;
-        width: var(--wpt-progress-line-width);
-
-        /* TODO: 
-            hate that we're animating left, but it's relative and can be set
-            using the timeline very easily
-        */
-        left: var(--wpt-scroll-pct);
-        top: var(--wpt-line-pct-top, 37px);
-        bottom: var(--wpt-line-pct-bottom, 170px);
-
-        background-color: var(--wpt-progress-line-color);
-        opacity: 0.8;
-
-        will-change: left;
-
-        animation: scrollTransform linear(0, var(--wpt-start-stop) 0%, 1 var(--wpt-end-stop) 90%);
-        animation-timeline: --wpt-embed-scroller;
       }
     }
 
-    /**************
-     * 
-     * Gif and Video sections
-     * 
-     ***/
+    & picture::after {
+      content: "";
+      display: block;
+      z-index: 1;
+      position: absolute;
+      display: block;
+      width: var(--wpt-progress-line-width);
+      left: var(--wpt-scroll-pct);
+      top: var(--wpt-line-pct-top, 37px);
+      bottom: var(--wpt-line-pct-bottom, 170px);
 
-    /*
-    #gif,
-    #video { }
-    */
+      background-color: var(--wpt-progress-line-color);
+      opacity: 0.8;
 
-    /**************
-     * 
-     * Misc
-     * 
-     ***/
-    #gif,
-    #video,
-    #breakdown {
-      flex-wrap: wrap;
+      will-change: left;
+
+      animation: scrollTransform linear(0, var(--wpt-start-stop) 0%, 1 var(--wpt-end-stop) 90%);
+      animation-timeline: --wpt-embed-scroller;
     }
+  }
+
+  /**************
+    * 
+    * Misc
+    * 
+    ***/
+  #gif,
+  #video,
+  #breakdown {
+    flex-wrap: wrap;
+  }
   `;
 
   static template = templateFor(`
   <div id="filmstrip" part="filmstrip">
     <table id="main-table">
       <tbody>
-        <tr id="timing">
-        </tr>
+        <tr id="timing"></tr>
       </tbody>
     </table>
   </div>
@@ -578,8 +586,10 @@ class WPTEmbed extends HTMLElement {
     }
   }
 
-  // FIXME(slightlyoff): very slow to initialize
-  // #_tf = Intl.NumberFormat("en-US", { minimumFractionDigits: 1 });
+  // FIXME(slightlyoff): Intl is very slow to initialize
+  // #_tf = Intl.NumberFormat("en-US", {
+  //   minimumFractionDigits: 1
+  // });
   #_intervalMs = 100;
   #_interval = "100";
   #_mfd = 1;
@@ -961,19 +971,17 @@ class WPTTest extends HTMLElement {
   }
 
   static rowTemplate = templateFor(`
-    <!-- start -->
-    <tr class="meta-row">
-      <td class="meta">
-        <div class="labels">
-          <a class="test-link" target="_new" part="test-link">
-            <span class="label" part="label"></span>
-          </a>
-        </div>
-      </td>
-    </tr>
-    <tr class="filmstrip-row">
-    </tr>
-    <!-- end -->
+<tr class="meta-row">
+  <td class="meta">
+    <div class="labels">
+      <a class="test-link" target="_new" part="test-link">
+        <span class="label" part="label"></span>
+      </a>
+    </div>
+  </td>
+</tr>
+<tr class="filmstrip-row">
+</tr>
   `);
 
   #fragStart = null;
@@ -1053,36 +1061,54 @@ class WPTTest extends HTMLElement {
     return new URL(path, this.#_timelineURL);
   }
 
+  // TODO: should decoding be async? What about lazy loading?
   static figureTemplate = templateFor(`
-    <figure>
-      <a target="_blank">
-        <picture>
-          <img>
-        </picture>
-      </a>
-      <figcaption></figcaption>
-    </figure>
+<figure>
+  <a target="_blank">
+    <picture>
+      <img>
+    </picture>
+  </a>
+  <figcaption></figcaption>
+</figure>
   `);
 
-  #setupFigure(container, name="", timeline=false) {
+  #setupFigure(container, 
+               src="", 
+               name="", 
+               alt="", 
+               target="", 
+               caption="",
+               timeline=false) {
     container.appendChild(WPTTest.figureTemplate.cloneNode(true));
-    let figure = container.lastElementChild;
-    if(name) { figure.setAttribute("part", name); }
+    let fig = container.lastElementChild;
+    let fqs = eqs(fig);
+    if(name) { 
+      fig.setAttribute("part", name);
+    }
+    let img = fqs("img");
+    if(src) { img.src = src; }
+    img.alt = alt;
+    if(target) { fqs("a").href = target; }
+    if(caption) { fqs("figcaption").textContent = caption ; }
     if(timeline) {
-      let img = qs(figure, "img");
       img.addEventListener("load", (e) => {
         let nw = img.naturalWidth;
         let nh = img.naturalHeight;
 
         // CSS calc() can't convert to percentages, so we do it here instead
-        figure.style.setProperty("--wpt-line-pct-top", `${(37 / nh).toFixed(5) * 100 }%`);
+        fig.style.setProperty("--wpt-line-pct-top", `${(37 / nh).toFixed(5) * 100 }%`);
 
-        figure.style.setProperty("--wpt-start-stop", `${(250 / nw).toFixed(5)}`);
+        fig.style.setProperty("--wpt-start-stop", `${(250 / nw).toFixed(5)}`);
 
-        figure.style.setProperty("--wpt-line-pct-bottom", `${(170/ nh).toFixed(5) * 100 }%`);
+        fig.style.setProperty("--wpt-line-pct-bottom", `${(170/ nh).toFixed(5) * 100 }%`);
       });
+      fig.style.setProperty(
+        "--wpt-test-length",
+        this?.data?.fullyLoaded
+      );
     }
-    return figure;
+    return fig;
   }
 
   #location = "";
@@ -1112,66 +1138,70 @@ class WPTTest extends HTMLElement {
 
   #waterfall = null;
   renderWaterfallInto(container) {
+    if(!this.data) { return; }
     if(this?.parentNode?.end != "full") {
-      console.error("cannot render waterfalls for filmstrips that specify an 'end' other than 'full'");
+      console.error("'end' must be 'full' to display waterfall");
       return;
     }
     if(!this.#waterfall) {
-      this.#waterfall = this.#setupFigure(container, "waterfall-figure", true);
+      this.#waterfall = this.#setupFigure(
+        container, 
+        this.#relativeImgURL(this?.data?.waterfall),
+        "waterfall-figure",
+        `Resource waterfall chart for ${this.location}.`,
+        this.data.summary,
+        this.summary,
+        true
+      );
     } else {
       // Ensure order
       container.appendChild(this.#waterfall);
     }
-    if(!this.data) { return; }
-    let wqs = eqs(this.#waterfall);
-    wqs("a").href = this.data.summary;
-    wqs("img").src = this.#relativeImgURL(this.data.waterfall);
-    wqs("figcaption").innerText = this.summary; 
-    this.#waterfall.style.setProperty("--wpt-test-length", this?.data?.fullyLoaded);
   }
-
 
   #connections = null;
   renderConnectionsInto(container) {
     if(this?.parentNode?.end != "full") {
-      console.error("cannot render connections for filmstrips that specify an 'end' other than 'full'");
+      console.error("'end' must be 'full' to display connections");
       return;
     }
     if(this.#connections) {
       container.appendChild(this.#connections);
       return;
     }
-    if(!this.data) { return; }
-    let w = this.#connections = this.#setupFigure(container, "container-figure", true);
-    qs(w, "a").href = this.data.summary;
-    qs(w, "img").src = this.#relativeImgURL(this.data.connectionView);
-    // TODO: factor out
-    qs(w, "figcaption").textContent = `Connections and utilization. ${this.data.view == "firstView" ? "First" : "Repeat" } view, ${(this.data.bwDown / 1000).toFixed(1)}/${(this.data.bwUp / 1000).toFixed(1)}Mbps, ${this.data.latency}ms RTT.`;
-      this.#connections.style.setProperty("--wpt-test-length", this?.data?.fullyLoaded);
+    this.#connections = this.#setupFigure(
+      container, 
+      this.#relativeImgURL(this.data.connectionView),
+      "container-figure",
+      `Network connections chart for ${this.location}.`,
+      this.data.summary,
+      `Connections and utilization. ${this.data.view == "firstView" ? "First" : "Repeat" } view, ${(this.data.bwDown / 1000).toFixed(1)}/${(this.data.bwUp / 1000).toFixed(1)}Mbps, ${this.data.latency}ms RTT.`,
+      true
+    );
   }
 
   // TODO: implement Anna Tudor's pie charts:
   // https://codepen.io/thebabydino/pen/XWvKjJJ
   static breakdownTemplate = templateFor(`
-    <table part="breakdown-table">
-      <caption></caption>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Wire Size</th>
-          <th>Decoded</th>
-          <th>Requests</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th></th>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-      </tbody>
-    </table>
+<table part="breakdown-table">
+  <caption></caption>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Wire Size</th>
+      <th>Decoded</th>
+      <th>Requests</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th></th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
   `);
 
   #breakdown = null;
@@ -1218,32 +1248,31 @@ class WPTTest extends HTMLElement {
   }
 
   static cruxTemplate = templateFor(`
-  <div class="crux">
-    <!-- <h3 class="summary"></h3> -->
-    <h3 class="details"></h3>
-    <div class="metric">
-      <h4 class="title"></h3>
-      <p class="value"></p>
-      <p class="pct">At 75th percentile of visits</p>
-      <ul></ul>
-      <div class="thresholds">
-        <div>
-          <span class="key good">&nbsp;</span>
-          Good
-          (&lt; <span class="goodValue"></span>)
-        </div>
-        <div>
-          <span class="key fair">&nbsp;</span>
-          Fair
-        </div>
-        <div>
-          <span class="key poor">&nbsp;</span>
-          Poor
-          (&#8805; <span class="poorValue"></span>)
-        </div>
+<div class="crux">
+  <h3 class="details"></h3>
+  <div class="metric">
+    <h4 class="title"></h3>
+    <p class="value"></p>
+    <p class="pct">At 75th percentile of visits</p>
+    <ul></ul>
+    <div class="thresholds">
+      <div>
+        <span class="key good">&nbsp;</span>
+        Good
+        (&lt; <span class="goodValue"></span>)
+      </div>
+      <div>
+        <span class="key fair">&nbsp;</span>
+        Fair
+      </div>
+      <div>
+        <span class="key poor">&nbsp;</span>
+        Poor
+        (&#8805; <span class="poorValue"></span>)
       </div>
     </div>
   </div>
+</div>
   `);
 
   #metrics = {
@@ -1360,7 +1389,7 @@ class WPTTest extends HTMLElement {
   }
 
 
-  #setMediaDimensions(figure, media) {
+  #setMediaDimensions(figure) {
       // TODO: wire up dimensions from:
       //
       // "gifImageData": {
@@ -1377,9 +1406,12 @@ class WPTTest extends HTMLElement {
       // "gifImageAspectRatio": "520 / 680"
       if(!this.data) { return; }
       let id = this.data.gifImageData;
-      figure.style.width = media.style.width = "100%";
-      media.style.maxWidth = `${id.width}px`;
-      media.style.aspectRatio = this.data.gifImageAspectRatio;
+      let m = figure.querySelector("img,video");
+      [figure, m].forEach((el) => {
+        el.style.width = "100%";
+        el.style.maxWidth = `${id.width}px`;
+        el.aspectRatio = this.data.gifImageAspectRatio;
+      });
   }
 
   static videoTemplate = templateFor(`
@@ -1401,33 +1433,38 @@ class WPTTest extends HTMLElement {
     let v = figure.querySelector("video");
     v.poster = this.#relativeImgURL("poster.png");
     v.src = this.#relativeImgURL("timeline.mp4");
-    this.#setMediaDimensions(v, figure);
+    this.#setMediaDimensions(figure);
     // TODO: set captions and alt
   }
 
   #gif = null;
   renderGifInto(container) {
     if(this.#gif || !this.data) { return; }
-    let figure = this.#gif = this.#setupFigure(container, "gif-figure");
-    let gif = figure.querySelector("img");
-    gif.src = this.#relativeImgURL("timeline.gif");
-    this.#setMediaDimensions(gif, figure);
+    let figure = this.#gif = this.#setupFigure(
+      container, 
+      this.#relativeImgURL("timeline.gif"),
+      "gif-figure",
+      `Loading ${this.location} took ${this.duration / 1000} seconds.`
+    );
+    this.#setMediaDimensions(figure);
   }
 
 
   // TODO: lazy loading isn't working right in FF
   static imgTemplate = templateFor(`
-    <td>
-      <img loading="lazy" decoding="async">
-      <div class="pct"></div>
-    </td>
-  `);
+  <td>
+    <img loading="lazy" decoding="async">
+    <div class="pct"></div>
+  </td>`);
 
   getFrames(interval, frameCount) {
     let framesMeta = Array.from(this.data.filmstripFrames);
     let frames = [];
 
     let current = 0;
+
+    let LCPs  = Array.from(this.data?.lcps || []);
+    let LSs = Array.from(this.data?.layoutShifts || []);
 
     let advanceTo = (cutoff=0) => {
       if(framesMeta[0].time < cutoff) {
@@ -1442,13 +1479,31 @@ class WPTTest extends HTMLElement {
       return framesMeta[0];
     };
 
+    let nextLCP = LCPs.shift();
+    let nextLS = LSs.shift();
     // Walk forward
+    let lastMeta = null;
+    let thisMeta = null;
     while(current <= (this.duration + interval)) {
-      let i = this.getFilmstripImage(advanceTo(current));
+      let lastMeta = thisMeta;
+      thisMeta = advanceTo(current);
+      let r = this.getFilmstripImage(thisMeta);
+      let img = qs(r, "img");
       if(frames.length < 5) {
-        i.querySelector("img").removeAttribute("loading");
+        img.removeAttribute("loading");
       }
-      frames.push(i);
+      frames.push(r);
+      if(lastMeta && (lastMeta !== thisMeta)) {
+        r.classList.add("visualChange");
+      }
+      if(nextLCP && current >= nextLCP) {
+        nextLCP = LCPs.shift();
+        r.classList.add("lcp");
+      }
+      if(nextLS && current >= nextLS) {
+        nextLS = LSs.shift();
+        r.classList.add("layoutShift");
+      }
       current += interval;
     }
     return frames;
@@ -1456,11 +1511,10 @@ class WPTTest extends HTMLElement {
 
   getFilmstripImage(meta) {
     let fragment = WPTTest.imgTemplate.cloneNode(true);
-    let i = fragment.querySelector("img");
-    i.src = this.#relativeImgURL(meta.image);
-    let d = fragment.querySelector("div");
-    d.innerText = `${meta.VisuallyComplete}%`;
-    return fragment.firstElementChild;
+    let td = fragment.children[0];
+    td.children[0].src = this.#relativeImgURL(meta.image);
+    td.children[1].textContent = `${meta.VisuallyComplete}%`;
+    return td;
   }
 
 }

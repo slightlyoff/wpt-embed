@@ -1,0 +1,498 @@
+let P=`
+wpt-embed.js, 0.2.15
+Copyright 2024-2025
+Alex Russell -- infrequently.org
+Licensed under the MIT license.
+`,j=function(n,t){if(n?.length>1||t?.length>1)throw"`css` tag called with values";return n[0]};CSS.registerProperty({name:"--wpt-scroll-pct",syntax:"<percentage>",inherits:!0,initialValue:"0%"});let b=(n,t)=>{let e=typeof n;if(e==="boolean")return n;if(e==="string"){let i=n.toLowerCase();if(!n.length||i=="true"||i==t)return!0}return!1},A=(n,t,e)=>{let i=n.toLowerCase();return i===t||i==="true"?e:n.split(/\s+/)},d=(n,t)=>n.querySelector(t),M=n=>t=>d(n,t),R=new Map,B=(n,t)=>{let e=R.get(t);if(!e){try{e={type:"CSS",value:new CSSStyleSheet},e.value.replaceSync(t)}catch{e={type:"sheet",value:t}}R.set(t,e)}switch(e.type){case"sheet":let i=n.createElement("style");i.textContent=e.value,n.appendChild(i);break;case"CSS":n.adoptedStyleSheets=[...n.adoptedStyleSheets,e.value];break}},q=(()=>{let n=new Map;return t=>{let e=n.get(t);return e||(e=t.replace(/(-)+([a-z]?)/g,(i,a,l,s)=>{let r=i[i.length-1];return s?r==="-"?"":r.toUpperCase():r}),n.set(t,e),e)}})(),v=n=>{let t=document.createElement("template");return t.innerHTML=n,t.content},D=(n=0)=>{if(!n||n<1)return Math.round(n)+" kB";let t=Math.round(n)+"",e=[],i=t.length;for(;i>3;)e.unshift(t.slice(-3)),t=t.slice(0,i-3),i=t.length;return e.unshift(t),e.join(",")+" kB"};class u extends HTMLElement{static observedAttributes=["aspect-ratio","size","interval","filmstrip","waterfall","connections","breakdown","crux","video","gif","end","order"];static styles=j`
+  /* A wee reset */
+  h1, h2, h3, h4, p, figure, blockquote, dl, dd {
+    margin-block-end: 0;
+    margin-block-start: 0;
+  }
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  :host {
+    timeline-scope: --wpt-embed-scroller;
+
+    --wpt-image-width: var(--image-width, 100px);
+    --wpt-progress-line-color: transparent;
+    --wpt-progress-line-width: 0px;
+
+    @supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+      --wpt-progress-line-color: red;
+      --wpt-progress-line-width: 2px;
+    }
+
+    --wpt-section-padding: 1rem 0;
+
+    /* TODO:
+    --wpt-no-change-border-color: transparent;
+    --wpt-visual-change-border-color: yellow;
+    --wpt-lcp-border-color: red;
+    */
+  }
+
+  :host([debug]) {
+    * {
+      outline: 1px solid blue;
+    }
+    outline: 2px dotted red;
+  }
+  
+  /**************
+    * 
+    * All sections
+    * 
+    **/
+
+  :host {
+    display: flex;
+    flex-direction: column;
+  }
+
+  :host > div {
+    width: 100%;
+    margin: var(--wpt-section-padding);
+
+    /* center */
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  caption,
+  figcaption {
+    text-align: center;
+    margin: 0.25em 0;
+  }
+
+  table {
+    border-collapse: collapse;
+  }
+
+  figure {
+    margin: 0;
+    padding: 0;
+  }
+
+  /**************
+    * 
+    * Filmstrip section
+    * 
+    ***/
+  
+  #filmstrip {
+    overflow-x: auto;
+    display: block;
+    position: relative;
+    scrollbar-gutter: stable;
+
+    scroll-timeline-axis: x;
+    scroll-timeline-name: --wpt-embed-scroller;
+  }
+
+  /* TODO: elide when there's no filmstrip */
+  :host([waterfall]),
+  :host([connections]) {
+    #filmstrip {
+      border-left: var(--wpt-progress-line-width) solid var(--wpt-progress-line-color);
+    }
+    #filmstrip.hidden { display: none; }
+  }
+
+  #main-table {
+    width: 100%;
+    top: 0px;
+    left: 0px;
+    /* TODO: not working in FF */
+    margin-right: calc(100%);
+  }
+
+  .filmstrip-row {
+    width: 100%;
+
+    & img {
+      margin-inline: 2px;
+      outline: 1px solid black;
+      content-visibility: auto;
+    }
+
+    & .pct {
+      text-align: center;
+    }
+
+    & .visualChange > img {
+      outline: var(
+        --wpt-visual-change-outline,
+        2px solid #ffc233
+      );
+    }
+
+    & .lcp > img {
+      outline: var(--wpt-lcp-outline, 2px solid #ff0000);
+    }
+
+    & .layoutShift.visualChange > img {
+      outline: var(
+        --wpt-layout-shift-visual-change-outline, 
+        2px dotted #ffc233
+      );
+    }
+    & .layoutShift.lcp > img {
+      outline: var(
+        --wpt-layout-shift-lcp-outline, 
+        2px dotted #ff0000
+      );
+    }
+  }
+
+  .meta {
+    text-align: left;
+  }
+
+  .labels {
+    position: sticky;
+    display: inline-block;
+    top: 0px;
+    left: 0px;
+    padding: 0.5rem;
+  }
+
+  #timing td {
+    text-align: center;
+  }
+
+  :host([size="small"]) {
+    --wpt-image-width: 50px;
+  }
+
+  :host([size="medium"]) {
+    --wpt-image-width: 100px;
+  }
+
+  :host([size="large"]) {
+    --wpt-image-width: 200px;
+  }
+
+  .filmstrip-row img {
+    width: var(--wpt-image-width, 100px);
+    contain-intrinsic-width: var(--wpt-image-width, 100px);
+    aspect-ratio: var(--wpt-aspect-ratio);
+  }
+
+  .filmstrip-meta {
+    padding: 1em;
+  }
+
+  :host > div.hidden { 
+    display: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  @keyframes scrollTransform {
+    from {
+      --wpt-scroll-pct: 0%;
+    }
+    to {
+      --wpt-scroll-pct: 100%;
+    }
+  }
+
+  /**************
+    * 
+    * Breakdown table and charts section
+    * 
+    ***/
+
+  #breakdown {
+
+    & > table {
+      min-width: 20rem;
+      width: 100%;
+      max-width: 35rem;
+      border-collapse: collapse;
+      border: 1px solid #dddddd;
+      margin: 0;
+
+      & > caption {
+        caption-side: bottom;
+      }
+
+      & td, th {
+        padding: 0.5em 0.35em;
+      }
+
+      & > thead {
+        background-color: gainsboro;
+        text-align: center;
+        color: var(--wpt-breakdown-even-color, inherit);
+      }
+      & > tbody {
+        & > tr {
+            border-bottom: 1px solid #dddddd;
+        }
+
+        & > tr:nth-of-type(even) {
+          background-color: #f3f3f3;
+          color: var(--wpt-breakdown-even-color, inherit);
+        }
+
+        & th {
+          text-align: left;
+        }
+        & td {
+          text-align: right;
+        }
+      }
+    }
+  }
+
+  /**************
+    * 
+    * CrUX data
+    * 
+    ***/
+  #crux {
+    flex-direction: column;
+    font-size: 0.8rem;
+
+    & > .crux {
+      width: 100%;
+
+      & > .metric {
+        width: 100%;
+        margin: 2em 0;
+
+        & .title {
+          opacity: 0.7;
+        }
+
+        & .value{
+          font-weight: 900;
+          font-size: 2em;
+          line-height: 1;
+          margin: 0.2em 0;
+        }
+
+        & .pct{
+          margin: 0.2em 0;
+        }
+
+        --good: var(--wpt-crux-good, rgb(12, 206, 107));
+        --fair: var(--wpt-crux-fair, rgb(255, 164, 0));
+        --poor: var(--wpt-crux-poor, rgb(255, 78, 66));
+
+        /* TODO: themes & contrast */
+        & .good {
+          background-color: var(--good);
+          color: white;
+        }
+        & .fair {
+          background-color: var(--fair);
+        }
+        & .poor {
+          background-color: var(--poor);
+          color: white;
+        }
+
+        & .value {
+          background-color: inherit;
+          &.good { color: var(--good); }
+          &.fair { color: var(--fair); }
+          &.poor { color: var(--poor); }
+        }
+        & > ul {
+          list-style: none;
+          padding: 0;
+          display: flex;
+          width: 100%;
+
+          & > li {
+            line-height: 2.2;
+            text-indent: 0.8em;
+
+          }
+        }
+
+        & > .thresholds {
+          display: flex;
+
+          & > div {
+            padding: 0.2em 0.8em;
+
+            & > .key {
+              display: inline-block;
+              width: 1.5em;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**************
+    * 
+    * Waterfall and Connections sections
+    * 
+    ***/
+
+  #waterfall,
+  #connections {
+    align-items: inherit;
+    overflow-x: auto;
+    width: 100%;
+    --wpt-start-stop: 0.24;
+
+    & picture {
+      width: 100%;
+      max-width: 1012px;
+      display: inline-block;
+      position: relative;
+      contain: content;
+      margin: 0;
+      padding: 0;
+      border: 0;
+
+      --es-tl: var(--wpt-test-length);
+      --es-lt: var(--wpt-longest-test, 1);
+      --wpt-end-stop: calc(var(--es-tl) / var(--es-lt) * 100%);
+
+      & > img {
+        width: 100%;
+        max-width: 1012px;
+      }
+    }
+
+    & picture::after {
+      content: "";
+      display: block;
+      z-index: 1;
+      position: absolute;
+      display: block;
+      width: var(--wpt-progress-line-width);
+      left: var(--wpt-scroll-pct);
+      top: var(--wpt-line-pct-top, 37px);
+      bottom: var(--wpt-line-pct-bottom, 170px);
+
+      background-color: var(--wpt-progress-line-color);
+      opacity: 0.8;
+
+      will-change: left;
+
+      animation: scrollTransform linear(0, var(--wpt-start-stop) 0%, 1 var(--wpt-end-stop) 90%);
+      animation-timeline: --wpt-embed-scroller;
+    }
+  }
+
+  /**************
+    * 
+    * Misc
+    * 
+    ***/
+  #gif,
+  #video,
+  #breakdown {
+    flex-wrap: wrap;
+  }
+  `;static template=v(`
+  <div id="filmstrip" part="filmstrip">
+    <table id="main-table">
+      <tbody>
+        <tr id="timing"></tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="waterfall" part="waterfall" class="hidden"></div>
+  <div id="connections" part="connections" class="hidden"></div>
+  <div id="breakdown" part="breakdown" class="hidden"></div>
+  <div id="crux" part="crux" class="hidden"></div>
+  <div id="gif" part="gif" class="hidden"></div>
+  <div id="video" part="video" class="hidden"></div>
+  `);static tagName="wpt-embed";get tagName(){return this.constructor.tagName}constructor(){super();let t=this.attachShadow({mode:"open"})}attributeChangedCallback(t,e,i){if(u.observedAttributes.includes(t)&&e!==i){let a=q(t);this[a]=i}}#t=100;#o="100";#e=1;set interval(t){let e=this.#t;typeof t=="number"&&(t=t.toString());let i;switch(t){case"16":case"16ms":case"60fps":this.#t=16,this.#e=3;break;case"1000":case"1000ms":case"1s":this.#t=1e3,this.#e=0;break;case"5000":case"5000ms":case"5s":this.#t=5e3,this.#e=0;break;case"500":case"500ms":case"0.5s":this.#t=500,this.#e=1;break;case"100":case"100ms":case"0.1s":default:this.#t=100,this.#e=1;break}this.#t!==e&&this.updateTests()}get interval(){return this.#o}getTimingFor(t=0){let e=document.createElement("td"),i=document.createElement("span"),a=Math.trunc(t/1e3),l=Math.abs(a?1e3*a-t:t),s=a+"";return this.#e&&(s+="."+(l+"").padEnd("0",this.#e).substring(0,this.#e)),i.innerText=s,e.appendChild(i),e}#a=!0;set filmstrip(t){this.#a=b(t,"filmstrip")}get filmstrip(){return this.#a}#f=!1;set waterfall(t){this.#f=b(t,"waterfall")}get waterfall(){return this.#f}#h=!1;set connections(t){this.#h=b(t,"connections")}get connections(){return this.#h}#c=!1;set breakdown(t){this.#c=b(t,"breakdown")}get breakdown(){return this.#c}#l=[];set crux(t){this.#l=A(t,"crux",["inp","lcp","cls"])}get crux(){return this.#l}#u=!1;set video(t){this.#u=b(t,"video")}get video(){return this.#u}#d=!1;set gif(t){this.#d=b(t,"gif")}get gif(){return this.#d}#p=[];set order(t){this.#p=A(t,"order",[])}get order(){return this.#p}#n="full";#m={full:"fullyLoaded",visual:"visualComplete",onload:"loadEventEnd",lcp:"LargestContentfulPaint",fcp:"FirstContentfulPaint"};set end(t){this.#m[t]&&(this.#n=t==="end"?"full":t)}get end(){return this.#n}get longEnd(){return this.#m[this.#n]}connectedCallback(){this.wireElements()}get#i(){return Array.from(this.children).filter(t=>t.tagName==="wpt-test")}#s(t,e){typeof e=="string"&&(e=this.byId(e));let i=!0;return typeof t=="string"||Array.isArray(t)?i=!t.length:i=!t,e.classList[i?"add":"remove"]("hidden"),e}updateTests(){if(!this.#r)return;let t=this.#i;for(let s of t)if(!s.data)return;let e=t.map(s=>s.duration),i=Math.max(...e)+this.#t,a=[];for(let s=0;s<=i;s+=this.#t)a.push(this.getTimingFor(s));this.filmstrip&&this.byId("timing").replaceChildren(...a),this.#p.length&&this.shadowRoot.prepend(...this.#p.map(s=>this.byId(s)));var l=0;for(let s of this.#i){let r=s.duration||0;r>l&&(l=r)}this.style.setProperty("--wpt-longest-test",l),this.#i.forEach(s=>{this.filmstrip?s.renderFilmstripInto(this.#t,a.length,this.byId("main-table").tBodies[0]):(this.byId("main-table").classList.add("hidden"),this.byId("filmstrip").classList.add("hidden"));let r=this.byId("waterfall");this.#s(this.waterfall,r),this.waterfall&&s.renderWaterfallInto(r),r=this.byId("connections"),this.#s(this.connections,r),this.connections&&s.renderConnectionsInto(r),r=this.byId("breakdown"),this.#s(this.breakdown,r),this.breakdown&&s.renderBreakdownInto(r),r=this.byId("crux"),this.#s(this.crux,r),this.crux.length&&s.renderCruxInto(r,this.crux),r=this.byId("video"),this.#s(this.video,r),this.video&&s.renderVideoInto(r),r=this.byId("gif"),this.#s(this.gif,r),this.gif&&s.renderGifInto(r)})}#r=!1;byId(t){return this.shadowRoot.getElementById(t)}wireElements(){if(this.#r)return;this.#r=!0;let t=this.shadowRoot,e=(i,a,l)=>{let s=typeof l=="string"?this[l].bind(this):l;this.byId(i).addEventListener(a,s)};B(t,u.styles),t.appendChild(u.template.cloneNode(!0)),this.addEventListener("test-modified",this.updateTests)}}customElements.define(u.tagName,u),customElements.define("wpt-filmstrip",class extends u{});class f extends HTMLElement{static observedAttributes=["label","test","run","view","timeline","timeline-video","aspect-ratio","avif"];static tagName="wpt-test";get tagName(){return this.constructor.tagName}constructor(){super()}#t=!1;#o(){this.#t=!0,this.#e&&(this.dispatchEvent(new CustomEvent("test-modified",{bubbles:!0})),this.#t=!1)}#e=!1;connectedCallback(){this.parentNode&&this.parentNode?.tagName===u.tagName&&(this.#e=!0,this.#o(),this.#d())}data=null;#a="";set timeline(t){this.updateTimeline(t)}get timeline(){return this.#a}#f="";set label(t){this.#f=t,this.#o()}get label(){return this.#f}#h="";set test(t){t&&!t.endsWith("/")&&(t+="/"),this.#h=t,t&&this.#d()}#c="1";set run(t){this.#c=parseInt(t)+"",t&&this.#d()}#l="first";set view(t){t&&["first","repeat"].includes(t)&&(this.#l=t,this.#d())}get duration(){return this?.data?.[this?.parentNode?.longEnd]||0}#u=!1;set avif(t){this.#u=b(t,"avif")}get avif(){return this.#u}#d(){if(!this.#e)return;if(this.#h&&this.#c&&this.#l){let e=`${this.#h}runs/${this.#c}/${this.#l}View/timeline.json`;this.updateTimeline(e);return}let t=this.querySelector(':scope > script[type="text/json"]')||this.querySelector(':scope > script[type="application/json"]');if(t&&t.hasAttribute("dir")){let e=JSON.parse(t.textContent),a=`${t.getAttribute("dir")}${e.testName||e.id}/runs/${e.run}/${e.view}/timeline.json`;this.data=e,this.avif=this.data.optimizedImages,this.#a=a,this.#o()}}async updateTimeline(t){if(!(!t||t===this.#a)){this.#a=t;try{let e=await fetch(t);this.data=await e.json(),this.avif=this.data.optimizedImages,this.#o()}catch(e){console.error(e),this.data=null}}}#p=!1;attributeChangedCallback(t,e,i){if(this.#p=!0,f.observedAttributes.includes(t)&&e!==i){let a=q(t);this[a]=i,this.#o(a,i)}}static rowTemplate=v(`
+<tr class="meta-row">
+  <td class="meta">
+    <div class="labels">
+      <a class="test-link" target="_new" part="test-link">
+        <span class="label" part="label"></span>
+      </a>
+    </div>
+  </td>
+</tr>
+<tr class="filmstrip-row">
+</tr>
+  `);#n=null;#m=null;#i=null;extract(){if(this.#n){if(this.#i)return this.#i;let t=new Range;return t.setStartBefore(this.#n),t.setEndAfter(this.#m),this.#i=t.extractContents(),t.detach(),[this.#g,this.#w,this.#b,this.#C,this.#k,this.#$].forEach(e=>{e&&e.remove()}),this.#i}}disconnectedCallback(){this.extract()}renderFilmstripInto(t=100,e,i){if(!this.data)return;let a;if(this.#n&&(a=this.extract(),!this.#t)){i.append(a),this.#i=null;return}a=f.rowTemplate.cloneNode(!0);let l=Array.from(a.childNodes).filter(h=>h.nodeType===8);this.#n=l.shift(),this.#m=l.shift();let s=M(a);s(".test-link").setAttribute("href",this.data.summary),s(".meta").setAttribute("colspan",e),s(".label").innerText=this.label||this.data.url;let r=this.getFrames(t,e),o=s(".filmstrip-row");o.replaceChildren(...r),o.style.setProperty("--wpt-aspect-ratio",this.data.filmstripImageAspectRatio),i.append(a),this.#i=null}#s=null;#r(t){return this.#s||(this.#s=new URL(this.#a,window.location)),this.avif&&(t.endsWith(".png")||t.endsWith(".jpg"))&&(t=t.slice(0,-4)+".avif"),new URL(t,this.#s)}static figureTemplate=v(`
+<figure>
+  <a target="_blank">
+    <picture>
+      <img>
+    </picture>
+  </a>
+  <figcaption></figcaption>
+</figure>
+  `);#v(t,e="",i="",a="",l="",s="",r=!1){t.appendChild(f.figureTemplate.cloneNode(!0));let o=t.lastElementChild,h=M(o);i&&o.setAttribute("part",i);let c=h("img");return e&&(c.src=e),c.alt=a,l&&(h("a").href=l),s&&(h("figcaption").textContent=s),r&&(c.addEventListener("load",S=>{let m=c.naturalWidth,p=c.naturalHeight;o.style.setProperty("--wpt-line-pct-top",`${(37/p).toFixed(5)*100}%`),o.style.setProperty("--wpt-start-stop",`${(250/m).toFixed(5)}`),o.style.setProperty("--wpt-line-pct-bottom",`${(170/p).toFixed(5)*100}%`)}),o.style.setProperty("--wpt-test-length",this?.data?.fullyLoaded)),o}#y="";get location(){if(!this.#y&&this.data){let t=new URL(this.data.testUrl);this.#y=`${t.host}${t.pathname=="/"?"":t.pathname}`}return this.#y}#x="";get summary(){if(this.#x&&this.data){let t=this.data.from.replaceAll("<b>","").replaceAll("</b>","").replace(" - ",` in ${this.data.mobile?"mobile":"desktop"} `).replace(" - "," on an ").replace(" - "," using an emulated ")+" connection";this.#x=`${this.location} tested from ${t}; ${this.#l} view`}return this.#x}#g=null;renderWaterfallInto(t){if(this.data){if(this?.parentNode?.end!="full"){console.error("'end' must be 'full' to display waterfall");return}this.#g?t.appendChild(this.#g):this.#g=this.#v(t,this.#r(this?.data?.waterfall),"waterfall-figure",`Resource waterfall chart for ${this.location}.`,this.data.summary,this.summary,!0)}}#w=null;renderConnectionsInto(t){if(this?.parentNode?.end!="full"){console.error("'end' must be 'full' to display connections");return}if(this.#w){t.appendChild(this.#w);return}this.#w=this.#v(t,this.#r(this.data.connectionView),"container-figure",`Network connections chart for ${this.location}.`,this.data.summary,`Connections and utilization. ${this.data.view=="firstView"?"First":"Repeat"} view, ${(this.data.bwDown/1e3).toFixed(1)}/${(this.data.bwUp/1e3).toFixed(1)}Mbps, ${this.data.latency}ms RTT.`,!0)}static breakdownTemplate=v(`
+<table part="breakdown-table">
+  <caption></caption>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Wire Size</th>
+      <th>Decoded</th>
+      <th>Requests</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th></th>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+  `);#b=null;renderBreakdownInto(t){if(this.#b){t.appendChild(this.#b);return}if(!this?.data?.breakdown)return;delete this.data.breakdown.flash,t.appendChild(f.breakdownTemplate.cloneNode(!0));let e=this.#b=t.lastElementChild,i=d(e,"caption");i.textContent=`${this.location}, ${this.#l} view`;let a=d(e,"tbody > tr");a.remove();let l={bytes:0,bytesUncompressed:0,requests:0};for(let[s,r]of Object.entries(this.data.breakdown))r.bytes!==0&&(l.bytes+=r.bytes,l.bytesUncompressed+=r.bytesUncompressed,l.requests+=r.requests);this.data.breakdown.Total=l;for(let[s,r]of Object.entries(this.data.breakdown)){let o=a.cloneNode(!0);o.firstElementChild.textContent=s,o.children[1].textContent=D(r.bytes/1e3),o.children[2].textContent=D(r.bytesUncompressed/1e3),o.children[3].textContent=r.requests,e.tBodies[0].appendChild(o)}}static cruxTemplate=v(`
+<div class="crux">
+  <h3 class="details"></h3>
+  <div class="metric">
+    <h4 class="title"></h3>
+    <p class="value"></p>
+    <p class="pct">At 75th percentile of visits</p>
+    <ul></ul>
+    <div class="thresholds">
+      <div>
+        <span class="key good">&nbsp;</span>
+        Good
+        (&lt; <span class="goodValue"></span>)
+      </div>
+      <div>
+        <span class="key fair">&nbsp;</span>
+        Fair
+      </div>
+      <div>
+        <span class="key poor">&nbsp;</span>
+        Poor
+        (&#8805; <span class="poorValue"></span>)
+      </div>
+    </div>
+  </div>
+</div>
+  `);#I={fcp:{name:"first_contentful_paint",title:"First Contentful Paint"},lcp:{name:"largest_contentful_paint",title:"Largest Contentful Paint"},inp:{name:"interaction_to_next_paint",title:"Interaction to Next Paint"},cls:{name:"cumulative_layout_shift",title:"Cumulative Layout Shift",unitless:!0},ttfb:{name:"experimental_time_to_first_byte",title:"Time to First byte"}};#L=["good","fair","poor"];#C=null;renderCruxInto(t,e=["inp","lcp","cls"]){if(this.#C||!this?.data?.crux)return;t.appendChild(f.cruxTemplate.cloneNode(!0));let i=this.#C=t.lastElementChild,a=d(i,".metric");a.remove();let l=this.data.crux;for(let N of e){let x=this.#I[N];if(!x)continue;let y=l.metrics[x.name],w=a.cloneNode(!0);d(w,".title").textContent=`${x.title} (${N.toUpperCase()})`;let C=y.percentiles.p75,T=C,L=y.histogram[0].end,E=y.histogram[2].start;x.unitless||(T=`${C/1e3}s`,L=`${L/1e3}s`,E=`${E/1e3}s`);let k="good";C>y.histogram[1].end?k="poor":C>y.histogram[0].end&&(k="fair"),d(w,".value").textContent=`${T} (${k})`,d(w,".value").classList.add(k);let z=d(w,"ul");this.#L.forEach((U,O)=>{let F=parseInt(y.histogram[O].density*100)+"%",$=document.createElement("li");$.textContent=F,$.style.flexBasis=F,$.classList.add(U),z.appendChild($)}),d(w,".goodValue").textContent=L,d(w,".poorValue").textContent=E,i.appendChild(w)}let s=l.collectionPeriod.firstDate,r=l.collectionPeriod.lastDate,o={year:"numeric",month:"long",day:"numeric"},h=(s.month+"").padStart(2,"0"),c=(s.day+"").padStart(2,"0"),S=new Date(`${s.year}-${h}-${c}`).toLocaleDateString("en",o),m=(r.month+"").padStart(2,"0"),p=(r.day+"").padStart(2,"0"),g=new Date(`${r.year}-${m}-${p}`).toLocaleDateString("en",o),I=l.key.formFactor=="PHONE",_=new URL(this.data.crux.key.url).host;d(i,".details").textContent=`Web Vitals data for ${_}. Collected from Chrome ${I?"mobile":"desktop"} users, ${S} \u2013 ${g}.`}#S(t){if(!this.data)return;let e=this.data.gifImageData,i=t.querySelector("img,video");[t,i].forEach(a=>{a.style.width="100%",a.style.maxWidth=`${e.width}px`,a.aspectRatio=this.data.gifImageAspectRatio})}static videoTemplate=v(`
+  <figure part="video-figure">
+    <video 
+      controls
+      preload="metadata"
+      loading="lazy">
+    </video>
+    <figcaption></figcaption>
+  </figure>
+  `);#k=null;renderVideoInto(t){if(this.#k||!this.data)return;t.appendChild(f.videoTemplate.cloneNode(!0));let e=this.#k=t.lastElementChild,i=e.querySelector("video");i.poster=this.#r("poster.png"),i.src=this.#r("timeline.mp4"),this.#S(e)}#$=null;renderGifInto(t){if(this.#$||!this.data)return;let e=this.#$=this.#v(t,this.#r("timeline.gif"),"gif-figure",`Loading ${this.location} took ${this.duration/1e3} seconds.`);this.#S(e)}static imgTemplate=v(`
+  <td>
+    <img loading="lazy" decoding="async">
+    <div class="pct"></div>
+  </td>`);getFrames(t,e){let i=Array.from(this.data.filmstripFrames),a=[],l=0,s=Array.from(this.data?.lcps||[]),r=Array.from(this.data?.layoutShifts||[]),o=(p=0)=>{if(i[0].time<p)for(;i[0].time<p&&i[1]&&i[1].time<=p;)i.shift();return i[0]},h=s.shift(),c=r.shift(),S=null,m=null;for(;l<=this.duration+t;){let p=m;m=o(l);let g=this.getFilmstripImage(m),I=d(g,"img");a.length<5&&I.removeAttribute("loading"),a.push(g),p&&p!==m&&g.classList.add("visualChange"),h&&l>=h&&(h=s.shift(),g.classList.add("lcp")),c&&l>=c&&(c=r.shift(),g.classList.add("layoutShift")),l+=t}return a}getFilmstripImage(t){let i=f.imgTemplate.cloneNode(!0).children[0];return i.children[0].src=this.#r(t.image),i.children[1].textContent=`${t.VisuallyComplete}%`,i}}customElements.define(f.tagName,f);var H=u;export{H as default};
