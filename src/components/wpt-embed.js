@@ -13,7 +13,7 @@
  * - data sharing back-plane
  */
 let ver = `
-wpt-embed.js, 0.2.16
+wpt-embed.js, 0.2.17
 Copyright 2024-2025
 Alex Russell -- infrequently.org
 Licensed under the MIT license.
@@ -1067,7 +1067,7 @@ class WPTTest extends HTMLElement {
 <figure>
   <a target="_blank">
     <picture>
-      <img>
+      <img loading="lazy" decoding="async">
     </picture>
   </a>
   <figcaption></figcaption>
@@ -1415,10 +1415,7 @@ class WPTTest extends HTMLElement {
 
   static videoTemplate = templateFor(`
   <figure part="video-figure">
-    <video 
-      controls
-      preload="metadata"
-      loading="lazy">
+    <video controls preload="none">
     </video>
     <figcaption></figcaption>
   </figure>
