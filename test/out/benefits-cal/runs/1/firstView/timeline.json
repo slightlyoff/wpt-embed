@@ -222,81 +222,41 @@
   },
   "breakdown": {
     "html": {
-      "color": [
-        130,
-        181,
-        252
-      ],
       "bytes": 2423,
       "bytesUncompressed": 7540,
       "requests": 3
     },
     "js": {
-      "color": [
-        254,
-        197,
-        132
-      ],
       "bytes": 4383198,
       "bytesUncompressed": 22683915,
       "requests": 232
     },
     "css": {
-      "color": [
-        178,
-        234,
-        148
-      ],
       "bytes": 90793,
       "bytesUncompressed": 902345,
       "requests": 7
     },
     "image": {
-      "color": [
-        196,
-        154,
-        232
-      ],
       "bytes": 128441,
       "bytesUncompressed": 176009,
       "requests": 12
     },
     "flash": {
-      "color": [
-        45,
-        183,
-        193
-      ],
       "bytes": 0,
       "bytesUncompressed": 0,
       "requests": 0
     },
     "font": {
-      "color": [
-        255,
-        82,
-        62
-      ],
       "bytes": 832148,
       "bytesUncompressed": 832148,
       "requests": 9
     },
     "video": {
-      "color": [
-        33,
-        194,
-        162
-      ],
       "bytes": 0,
       "bytesUncompressed": 0,
       "requests": 0
     },
     "other": {
-      "color": [
-        196,
-        196,
-        196
-      ],
       "bytes": 519917,
       "bytesUncompressed": 1491581,
       "requests": 17

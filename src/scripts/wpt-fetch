@@ -259,6 +259,11 @@ let ebf = wrapEBF;
           ["pages", "thumbnails", "images", "breakdown"].forEach((o) => {
             viewData[o] = Object.assign({}, run[view][o]);
           });
+          // Trim the breakdown object
+          for(let type in viewData.breakdown) {
+            delete viewData.breakdown[type].color;
+          }
+
           // Direct values
           // 
           // TODO: should we add these?:
@@ -522,7 +527,8 @@ let ebf = wrapEBF;
           if(meta.length > 1) {
             let img0 = sharp(meta[0].path);
             let md = await img0.metadata();
-            delete md.depth;
+            // Trim out data we don't use
+            delete md.depth; 
             delete md.chromaSubsampling;
             delete md.isPalette;
             delete md.hasProfile;
