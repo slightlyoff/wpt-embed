@@ -13,7 +13,7 @@
  * - data sharing back-plane
  */
 let ver = `
-wpt-embed.js, 0.2.17
+wpt-embed.js, 0.2.18
 Copyright 2024-2025
 Alex Russell -- infrequently.org
 Licensed under the MIT license.
@@ -1440,7 +1440,8 @@ class WPTTest extends HTMLElement {
       container, 
       this.#relativeImgURL("timeline.gif"),
       "gif-figure",
-      `Loading ${this.location} took ${this.duration / 1000} seconds.`
+      `Loading ${this.location} took ${this.duration / 1000} seconds.`,
+      this.data.summary
     );
     this.#setMediaDimensions(figure);
   }

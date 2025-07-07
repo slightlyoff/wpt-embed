@@ -1,5 +1,5 @@
 let P=`
-wpt-embed.js, 0.2.17
+wpt-embed.js, 0.2.18
 Copyright 2024-2025
 Alex Russell -- infrequently.org
 Licensed under the MIT license.
@@ -490,7 +490,7 @@ Licensed under the MIT license.
     </video>
     <figcaption></figcaption>
   </figure>
-  `);#k=null;renderVideoInto(t){if(this.#k||!this.data)return;t.appendChild(f.videoTemplate.cloneNode(!0));let e=this.#k=t.lastElementChild,i=e.querySelector("video");i.poster=this.#r("poster.png"),i.src=this.#r("timeline.mp4"),this.#S(e)}#$=null;renderGifInto(t){if(this.#$||!this.data)return;let e=this.#$=this.#y(t,this.#r("timeline.gif"),"gif-figure",`Loading ${this.location} took ${this.duration/1e3} seconds.`);this.#S(e)}static imgTemplate=y(`
+  `);#k=null;renderVideoInto(t){if(this.#k||!this.data)return;t.appendChild(f.videoTemplate.cloneNode(!0));let e=this.#k=t.lastElementChild,i=e.querySelector("video");i.poster=this.#r("poster.png"),i.src=this.#r("timeline.mp4"),this.#S(e)}#$=null;renderGifInto(t){if(this.#$||!this.data)return;let e=this.#$=this.#y(t,this.#r("timeline.gif"),"gif-figure",`Loading ${this.location} took ${this.duration/1e3} seconds.`,this.data.summary);this.#S(e)}static imgTemplate=y(`
   <td>
     <img loading="lazy" decoding="async">
     <div class="pct"></div>
