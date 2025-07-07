@@ -1,6 +1,6 @@
 {
   "name": "@slightlyoff/wpt-embed",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "description": "Scripts and Web Components for capturing and displaying WPT traces in a blog",
   "main": "",
   "author": "Alex Russell",
@@ -9,7 +9,8 @@
     "url": "github:slightlyoff/wpt-embed"
   },
   "files": [
-    "src/**"
+    "src/**",
+    "dist/**"
   ],
   "license": "MIT",
   "engines": {
@@ -20,7 +21,11 @@
   },
   "scripts": {
     "wpt-fetch": "./src/scripts/wpt-fetch",
-    "wpt-fetch-examples": "./src/scripts/wpt-fetch -j ./test/config.json"
+    "wpt-fetch-examples": "./src/scripts/wpt-fetch -j ./test/config.json",
+    "build": "npx esbuild --minify --format=esm --outdir=dist/components/ src/components/wpt-embed.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.5"
   },
   "dependencies": {
     "commander": "^12.1.0",
@@ -30,8 +35,9 @@
     "webpagetest": "^0.7.6"
   },
   "keywords": [
-    "web components",
     "wpt",
-    "webpagetest"
+    "webperf",
+    "webpagetest",
+    "web components"
   ]
 }

@@ -5,11 +5,10 @@
  * - CPU and interactive charts
  * - Highlight low compression ratios and large payloads
  * - theme support
- * - filmstrip styling for timeline events:
+ * - legend for timeline event colors:
  *    https://nooshu.com/blog/2019/10/02/how-to-read-a-wpt-waterfall-chart/#what-do-the-filmstrip-thumbnail-border-colours-signify
  * - expose as a webc plugin for 11ty
  * - options to display connection and device params
- * - sync'd scroll for timeline and waterfall/connections
  * - "play" button?
  * - data sharing back-plane
  */
@@ -1346,11 +1345,8 @@ class WPTTest extends HTMLElement {
       } 
       qs(m, ".value").textContent = `${formatted} (${judgement})`;
       qs(m, ".value").classList.add(judgement);
-      // TODO: color the text
-      // qs(m, ".value").classList.add(judgement);
 
       // TODO: put marker on the chart at correct location
-
       let list = qs(m, "ul");     
       this.#states.forEach((n, i) => {
         let pct = parseInt(md.histogram[i].density * 100) + "%";
@@ -1376,6 +1372,7 @@ class WPTTest extends HTMLElement {
     };
     let fdm = (fd.month + "").padStart(2, "0");
     let fdd = (fd.day+ "").padStart(2, "0");
+    // FIXME(slightlyoff): toLocaleDateString is slow to init
     let startDate = (new Date(`${fd.year}-${fdm}-${fdd}`))
                       .toLocaleDateString("en", formatOpts);
     let ldm = (ld.month + "").padStart(2, "0");
@@ -1492,7 +1489,6 @@ class WPTTest extends HTMLElement {
       if(frames.length < 5) {
         img.removeAttribute("loading");
       }
-      frames.push(r);
       if(lastMeta && (lastMeta !== thisMeta)) {
         r.classList.add("visualChange");
       }
@@ -1504,6 +1500,8 @@ class WPTTest extends HTMLElement {
         nextLS = LSs.shift();
         r.classList.add("layoutShift");
       }
+      img.alt = `${this.location} at ${current/1000}s, ${thisMeta.VisuallyComplete}% loaded.`; 
+      frames.push(r);
       current += interval;
     }
     return frames;
