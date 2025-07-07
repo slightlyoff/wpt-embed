@@ -13,7 +13,7 @@
  * - data sharing back-plane
  */
 let ver = `
-wpt-embed.js, 0.2.15
+wpt-embed.js, 0.2.16
 Copyright 2024-2025
 Alex Russell -- infrequently.org
 Licensed under the MIT license.
@@ -970,6 +970,7 @@ class WPTTest extends HTMLElement {
   }
 
   static rowTemplate = templateFor(`
+<!-- start -->
 <tr class="meta-row">
   <td class="meta">
     <div class="labels">
@@ -981,6 +982,7 @@ class WPTTest extends HTMLElement {
 </tr>
 <tr class="filmstrip-row">
 </tr>
+<!-- end -->
   `);
 
   #fragStart = null;
