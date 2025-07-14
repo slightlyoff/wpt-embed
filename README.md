@@ -22,7 +22,7 @@ The `<wpt-embed>` web component consumes the `timeline.json` file generated in e
 
 ## CLI Examples
 
-First, install this package into your project via NPM, or via github (today):
+First, install this package into your project via NPM, or clone this repo:
 
 ```console
 $ npm i --save @slightlyoff/wpt-embed
@@ -106,7 +106,7 @@ $ tree
 Each of the view directories includes media and a a`timeline.json` file. To display timelines, we use the components provided in this package.
 
 > [!NOTE]
-> In the `TEST_ID:FRIENDLY_NAME` invocation above, renaming is option. If the `:...` is omitted, the test ID will be used as the directory name instead.
+> In the `TEST_ID:FRIENDLY_NAME` invocation, renaming is optional. If `:...` is omitted, the test ID will be used as the directory name.
 
 ## Component Examples
 
@@ -118,15 +118,15 @@ $ pwd
 $ touch timelines.html
 ```
 
-In `timelines.html`, we will directly reference the component script, but for product, you'd be expected to copy or package it to a different location. The script is self-contained and designed to work (only) on modern browsers:
+In `timelines.html`, we will directly reference the component script, but for production, you'll likely copy it to a different location:
 
 ```html
 <!DOCTYPE html>
 <!-- timelines.html -->
 <html>
   <head>
-    <script type="module">
-      import "./node_modules/wpt-embed/src/components/wpt-embed.js";
+    <script type="module"
+      src="./node_modules/wpt-embed/dist/components/wpt-embed.js">
     </script>
   </head>
   <body>
@@ -206,6 +206,8 @@ In `timelines.html`, we will directly reference the component script, but for pr
   </body>
 </html>
 ```
+
+`wpt-embed.js` is self-contained ("unencumbered", as [Zach](https://www.zachleat.com/) says) and designed to work (only) on modern browsers
 
 > [!TIP]
 > Timeline images are fetched from locations relative to the `timeline.json` file, so if you copy or move files, be sure to include the `filmstrip/` directory located next to `timeline.json` for the run in question, along with all media files in the same directory.
