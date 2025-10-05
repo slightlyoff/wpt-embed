@@ -13,10 +13,10 @@
  * - data sharing back-plane
  */
 let ver = `
-wpt-embed.js, 0.2.18
+wpt-embed.js, 0.3.0
 Copyright 2024-2025
 Alex Russell -- infrequently.org
-Licensed under the MIT license.
+Released under the MIT license.
 `;
 
 // For lit syntax highlighting
@@ -551,6 +551,8 @@ class WPTEmbed extends HTMLElement {
   }
   `;
 
+  // TODO: make plugin-based.
+
   static template = templateFor(`
   <div id="filmstrip" part="filmstrip">
     <table id="main-table">
@@ -919,6 +921,18 @@ class WPTTest extends HTMLElement {
   }
   get avif() { return this.#_avif; }
 
+  #getInlineConfig() {
+    let ic = 
+        this.querySelector(`:scope > script[type="text/json"]`) ||
+        this.querySelector(`:scope > script[type="application/json"]`);
+    let dir = ic.getAttribute("dir") || ic.getAttribute("directory");
+    if(!dir) { return null; }
+    return {
+      config: JSON.parse(inlineConfig.textContent),
+      directory: dir
+    };
+  }
+
   #maybeBuildTimeline() {
     if(!this.#connected) { return; }
     if(this.#test && this.#run && this.#view) {
@@ -926,12 +940,8 @@ class WPTTest extends HTMLElement {
       this.updateTimeline(u);
       return;
     }
-    let inlineConfig = 
-        this.querySelector(`:scope > script[type="text/json"]`) ||
-        this.querySelector(`:scope > script[type="application/json"]`);
-    if(inlineConfig && inlineConfig.hasAttribute("dir")) {
-      let cfg = JSON.parse(inlineConfig.textContent);
-      let dir = inlineConfig.getAttribute("dir");
+    let { config: cfg, directory: dir } = this.#getInlineConfig();
+    if(inlineConfig) {
       let test = `${dir}${cfg.testName || cfg.id}/runs/${cfg.run}/${cfg.view}/timeline.json`;
       this.data = cfg;
       this.avif = this.data.optimizedImages;
