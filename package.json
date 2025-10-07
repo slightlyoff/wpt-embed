@@ -25,13 +25,13 @@
     "build": "npx esbuild --minify --format=esm --outdir=dist/components/ src/components/wpt-embed.js"
   },
   "devDependencies": {
-    "esbuild": "^0.25.5"
+    "esbuild": "^0.25.10"
   },
   "dependencies": {
     "commander": "^12.1.0",
-    "dotenv": "^16.4.5",
-    "ora": "^8.0.1",
-    "sharp": "^0.34.2",
+    "dotenv": "^16.6.1",
+    "ora": "^8.2.0",
+    "sharp": "^0.34.4",
     "webpagetest": "^0.7.6"
   },
   "keywords": [

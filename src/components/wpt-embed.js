@@ -1,6 +1,8 @@
 /**
  * TODO:
  *
+ * - plugin architecture
+ * - comparison tables
  * - pie charts in breakdown
  * - CPU and interactive charts
  * - Highlight low compression ratios and large payloads
