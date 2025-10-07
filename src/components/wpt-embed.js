@@ -19,6 +19,10 @@ wpt-embed.js, 0.3.0
 Copyright 2024-2025
 Alex Russell -- infrequently.org
 Released under the MIT license.
+
+For documentation and source, visit:
+
+  https://github.com/slightlyoff/wpt-embed
 `;
 
 // For lit syntax highlighting
