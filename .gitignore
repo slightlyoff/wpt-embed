@@ -4,6 +4,7 @@ json-out
 .vscode
 .hintrc
 package-lock.json
+pnpm-lock.yaml
 
 # Logs
 logs
