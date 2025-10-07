@@ -413,6 +413,10 @@ class WPTEmbed extends HTMLElement {
     flex-direction: column;
     font-size: 0.8rem;
 
+    --good: var(--wpt-crux-good, rgb(12, 206, 107));
+    --fair: var(--wpt-crux-fair, rgb(255, 164, 0));
+    --poor: var(--wpt-crux-poor, rgb(255, 78, 66));
+
     & > .crux {
       width: 100%;
 
@@ -435,29 +439,33 @@ class WPTEmbed extends HTMLElement {
           margin: 0.2em 0;
         }
 
-        --good: var(--wpt-crux-good, rgb(12, 206, 107));
-        --fair: var(--wpt-crux-fair, rgb(255, 164, 0));
-        --poor: var(--wpt-crux-poor, rgb(255, 78, 66));
-
         /* TODO: themes & contrast */
         & .good {
           background-color: var(--good);
           color: white;
         }
+
         & .fair {
           background-color: var(--fair);
         }
+
         & .poor {
-          background-color: var(--poor);
           color: white;
+          background-color: var(--poor);
         }
 
         & .value {
+
           background-color: inherit;
+
           &.good { color: var(--good); }
+
           &.fair { color: var(--fair); }
+
           &.poor { color: var(--poor); }
+
         }
+
         & > ul {
           list-style: none;
           padding: 0;
@@ -467,7 +475,6 @@ class WPTEmbed extends HTMLElement {
           & > li {
             line-height: 2.2;
             text-indent: 0.8em;
-
           }
         }
 

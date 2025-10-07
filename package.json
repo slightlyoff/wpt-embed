@@ -22,10 +22,11 @@
   "scripts": {
     "wpt-fetch": "./src/scripts/wpt-fetch",
     "wpt-fetch-examples": "./src/scripts/wpt-fetch -j ./test/config.json",
-    "build": "npx esbuild --minify --format=esm --outdir=dist/components/ src/components/wpt-embed.js"
+    "build": "./build.sh"
   },
   "devDependencies": {
-    "esbuild": "^0.25.10"
+    "esbuild": "^0.25.10",
+    "lightningcss": "^1.30.2"
   },
   "dependencies": {
     "commander": "^12.1.0",
