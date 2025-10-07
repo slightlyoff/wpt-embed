@@ -150,6 +150,7 @@ class WPTEmbed extends HTMLElement {
     "waterfall",
     "connections",
     "breakdown",
+    "compare",
     "crux",
     "video",
     "gif",
@@ -365,7 +366,8 @@ class WPTEmbed extends HTMLElement {
     * 
     ***/
 
-  #breakdown {
+  #breakdown,
+  #compare {
 
     & > table {
       min-width: 20rem;
@@ -407,6 +409,14 @@ class WPTEmbed extends HTMLElement {
       }
     }
   }
+
+  /**************
+    * 
+    * Comparison-specific styles
+    * 
+    ***/
+  /* #compare {
+  } */
 
   /**************
     * 
@@ -559,7 +569,8 @@ class WPTEmbed extends HTMLElement {
     ***/
   #gif,
   #video,
-  #breakdown {
+  #breakdown,
+  #compare {
     flex-wrap: wrap;
   }
   `;
@@ -577,6 +588,7 @@ class WPTEmbed extends HTMLElement {
   <div id="waterfall" part="waterfall" class="hidden"></div>
   <div id="connections" part="connections" class="hidden"></div>
   <div id="breakdown" part="breakdown" class="hidden"></div>
+  <div id="compare" part="compare" class="hidden"></div>
   <div id="crux" part="crux" class="hidden"></div>
   <div id="gif" part="gif" class="hidden"></div>
   <div id="video" part="video" class="hidden"></div>
@@ -691,6 +703,10 @@ class WPTEmbed extends HTMLElement {
   set breakdown(v) { this.#breakdown = attrToBool(v, "breakdown"); }
   get breakdown() { return this.#breakdown; }
 
+  // #compare = false;
+  // set compare(v) { this.#compare = attrToBool(v, "compare"); }
+  // get compare() { return this.#compare; }
+
   #crux = [];
   set crux(v) {
     this.#crux = attrToList(v, "crux", ["inp", "lcp", "cls"]);
@@ -747,6 +763,27 @@ class WPTEmbed extends HTMLElement {
     return el;
   }
 
+  #_render(name, test) {
+    let el = this.byId(name);
+    this.#_matchHiddenState(this[name], el);
+    if(this[name]) { test.render(name, el); }
+  }
+
+  static sections = [ 
+    "waterfall",
+    "connections",
+    "breakdown",
+    // "compare",
+    "crux",
+    "video",
+    "gif"
+  ]
+
+  static sectionsUpper = WPTEmbed.sections.map((s) => {
+    let f = s.charAt(0).toUpperCase();
+    return f + s.substring(1);
+  });
+
   updateTests() {
     if(!this.#wired) { return; }
     let tests = this.#tests;
@@ -791,29 +828,9 @@ class WPTEmbed extends HTMLElement {
       }
 
       // TODO: DRY
-      let c = this.byId("waterfall");
-      this.#_matchHiddenState(this.waterfall, c);
-      if(this.waterfall) { t.renderWaterfallInto(c); }
-
-      c = this.byId("connections");
-      this.#_matchHiddenState(this.connections, c); 
-      if(this.connections) { t.renderConnectionsInto(c); }
-
-      c = this.byId("breakdown");
-      this.#_matchHiddenState(this.breakdown, c); 
-      if(this.breakdown) { t.renderBreakdownInto(c); }
-
-      c = this.byId("crux");
-      this.#_matchHiddenState(this.crux, c); 
-      if(this.crux.length) { t.renderCruxInto(c, this.crux); }
-
-      c = this.byId("video");
-      this.#_matchHiddenState(this.video, c); 
-      if(this.video) { t.renderVideoInto(c); }
-
-      c = this.byId("gif");
-      this.#_matchHiddenState(this.gif, c); 
-      if(this.gif) { t.renderGifInto(c); }
+      for(let s of WPTEmbed.sections) {
+        this.#_render(s, t);
+      }
     });
   }
 
@@ -935,13 +952,15 @@ class WPTTest extends HTMLElement {
   get avif() { return this.#_avif; }
 
   #getInlineConfig() {
+    let ret = { config: null, directory: null };
     let ic = 
         this.querySelector(`:scope > script[type="text/json"]`) ||
         this.querySelector(`:scope > script[type="application/json"]`);
+    if(!ic) { return ret; }
     let dir = ic.getAttribute("dir") || ic.getAttribute("directory");
-    if(!dir) { return null; }
+    if(!dir) { return ret; }
     return {
-      config: JSON.parse(inlineConfig.textContent),
+      config: JSON.parse(ic.textContent),
       directory: dir
     };
   }
@@ -954,7 +973,7 @@ class WPTTest extends HTMLElement {
       return;
     }
     let { config: cfg, directory: dir } = this.#getInlineConfig();
-    if(inlineConfig) {
+    if(cfg) {
       let test = `${dir}${cfg.testName || cfg.id}/runs/${cfg.run}/${cfg.view}/timeline.json`;
       this.data = cfg;
       this.avif = this.data.optimizedImages;
@@ -1025,6 +1044,7 @@ class WPTTest extends HTMLElement {
         this.#waterfall,
         this.#connections,
         this.#breakdown,
+        // this.#compare,
         this.#crux,
         this.#video,
         this.#gif,
@@ -1160,6 +1180,16 @@ class WPTTest extends HTMLElement {
     return this.#summary; 
   }
 
+  static renderMethodMap = new Map(WPTEmbed.sections.map((n, i) => { 
+    return [ n, `render${ WPTEmbed.sectionsUpper[i] }Into` ];
+  }));
+
+  render(name, container) {
+    if(container) {
+      return this[WPTTest.renderMethodMap.get(name)]?.(container);
+    }
+  } 
+
   #waterfall = null;
   renderWaterfallInto(container) {
     if(!this.data) { return; }
@@ -1270,6 +1300,24 @@ class WPTTest extends HTMLElement {
       bdt.tBodies[0].appendChild(r);
     }
   }
+
+  /*
+  #compare = null;
+  renderCompareInto(container) {
+    console.log("Not implemented");
+    let table;
+    if(!this.#compare) {
+      table = this.#compare = container.querySelector("table");
+    }
+    if(!table) {
+      // Build the comparison table if there isn't one
+      container.appendChild(WPTTest.breakdownTemplate.cloneNode(true));
+      table = this.#compare = container.lastElementChild;
+      table.setAttribute("part", "compare-table");
+    }
+    console.log(table);
+  }
+  */
 
   static cruxTemplate = templateFor(`
 <div class="crux">
@@ -1542,3 +1590,5 @@ class WPTTest extends HTMLElement {
 customElements.define(WPTTest.tagName, WPTTest);
 
 export default WPTEmbed;
+window.WPTEmbed = WPTEmbed;
+window.WPTTest = WPTTest;
