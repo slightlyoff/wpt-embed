@@ -33,7 +33,7 @@ Then run the provided script to download a previously-captured WebPageTest.org t
 ```console
 $ pwd
 /tmp/test
-$ npx wpt-fetch --key [yourkey] TEST_ID:FRIENDLY_NAME
+$ WPT_KEY=[yourkey] npx wpt-fetch TEST_ID:FRIENDLY_NAME
 ℹ no ouput directory, creating: /tmp/test/wpt-traces
 ✔  Results downloaded for test TEST_ID
 ✔  Downloaded 76 filmstrip images for TEST_ID, run 1, firstView

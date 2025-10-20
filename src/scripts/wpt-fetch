@@ -46,6 +46,56 @@ let ebf = wrapEBF;
   let { join } = await import("node:path");
   let { cwd } = await import("node:process");
   let { default: sharp } = await import("sharp");
+  let { spawn } = await import("node:child_process");
+
+  let _hasFFMpeg = undefined;
+  async function hasFFMpeg() {
+    if(_hasFFMpeg !== undefined) {
+      return _hasFFMpeg;
+    }
+    let ret = new Promise((res, rej) => {
+      let which_h = spawn("/usr/bin/which", [ "ffmpeg" ]);
+      which_h.stdout.on("data", (d) => { _hasFFMpeg = (!!d.length); });
+      which_h.stderr.on("data", (d) => { _hasFFMpeg = false; });
+      which_h.on("error", (e) => { rej(); });
+      which_h.on("close", () => { res(_hasFFMpeg); });
+    });
+    return ret;
+  }
+
+  async function transcodeToAV1(source, dest) {
+    if(!(await hasFFMpeg())) { return false; }
+    let marker = `ffmpeg transcode ${source} to av1`;
+    let ret = new Promise((res, rej) => {
+      let ffmpeg_h = spawn("/usr/bin/ffmpeg", [
+        "-y",
+        "-i", source,
+        "-c:v", "libsvtav1",
+        "-crf", "35",
+        "-preset", "5",
+        "-svtav1-params", "tune=0",
+        "-g", "240",
+        "-ac", "0",
+        "-c:s", "copy",
+        dest
+      ]);
+
+      let stdout = "";
+      let stderr = "";
+      ffmpeg_h.stdout.on("data", (d) => { stdout += d; });
+      ffmpeg_h.stderr.on("data", (d) => { stderr += d; });
+
+      ffmpeg_h.on("error", (e) => { rej(stderr); });
+      ffmpeg_h.on("close", () => {
+        if(stderr.includes("Error ")) {
+          console.error(stderr);
+          rej(false);
+        }
+        res(true);
+      });
+    });
+    return ret;
+  }
 
   let fetchResults = async (opts={}, ids=[], spinner) => {
     let key = opts.key;
@@ -613,6 +663,18 @@ let ebf = wrapEBF;
 
           spinner.succeed(` Downloaded video of ${testId}, run ${r}, ${view}`);
 
+          if(opts.optimizeImages && await hasFFMpeg()) {
+            let timelineAV1Path = join(viewDir, "timeline.mkv");
+            try {
+              await fs.stat(timelineAV1Path);
+            } catch (e) {
+              spinner.start(` Transcoding gif of ${testId}, run ${r}, ${view} to AV1`);
+              let start = Date.now();
+              await transcodeToAV1(timelineGifPath, timelineAV1Path);
+              spinner.succeed(` Transcoded gif of ${testId}, run ${r}, ${view} to AV1 in ${Date.now() - start}ms`);
+            }
+          }
+
           // Write out the summary for the component to consume
           let viewDataPath = join(viewDir, "timeline.json");
           await writeToPath(
@@ -635,7 +697,7 @@ let ebf = wrapEBF;
 
   let prog = new Command();
 
-  prog.version("0.0.1")
+  prog.version("0.3.0")
     // TODO: make key required from *some* source
     .addOption(
       new Option("-k, --key <key>", "WPT API key")
