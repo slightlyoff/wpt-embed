@@ -196,6 +196,7 @@ let ebf = wrapEBF;
 
       baseData.testName = testName;
       baseData.optimizedImages = opts.optimizeImages;
+      baseData.optimizedVideos = opts.optimizeImages;
       baseData.crux = results?.runs["1"]?.firstView?.CrUX;
 
       let writeToPath = async (data, path, desc="", replace=false) => {
@@ -664,7 +665,7 @@ let ebf = wrapEBF;
           spinner.succeed(` Downloaded video of ${testId}, run ${r}, ${view}`);
 
           if(opts.optimizeImages && await hasFFMpeg()) {
-            let timelineAV1Path = join(viewDir, "timeline.mkv");
+            let timelineAV1Path = join(viewDir, "timeline.webm");
             try {
               await fs.stat(timelineAV1Path);
             } catch (e) {

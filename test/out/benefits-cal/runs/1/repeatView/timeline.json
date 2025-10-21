@@ -16,6 +16,7 @@
   "testRuns": 3,
   "testName": "benefits-cal",
   "optimizedImages": true,
+  "optimizedVideos": true,
   "crux": {
     "key": {
       "formFactor": "PHONE",

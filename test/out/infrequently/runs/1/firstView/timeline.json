@@ -16,6 +16,7 @@
   "testRuns": 3,
   "testName": "infrequently",
   "optimizedImages": true,
+  "optimizedVideos": true,
   "view": "firstView",
   "run": "1",
   "pages": {

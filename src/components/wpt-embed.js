@@ -876,6 +876,7 @@ class WPTTest extends HTMLElement {
     "timeline-video",
     "aspect-ratio",
     "avif",
+    "av1",
     // TODO: ID reference to an existing test data obj
     // "ref",
   ];
@@ -951,6 +952,12 @@ class WPTTest extends HTMLElement {
   }
   get avif() { return this.#_avif; }
 
+  #_av1 = false;
+  set av1(v) {
+    this.#_av1 = attrToBool(v, "av1");
+  }
+  get av1() { return this.#_av1; }
+
   #getInlineConfig() {
     let ret = { config: null, directory: null };
     let ic = 
@@ -965,6 +972,14 @@ class WPTTest extends HTMLElement {
     };
   }
 
+  #setData(data, timeline) {
+    this.#_timeline = timeline;
+    this.data = data;
+    this.avif = this.data.optimizedImages;
+    this.av1 = this.data.optimizedVideos;
+    this.#maybeNotify();
+  }
+
   #maybeBuildTimeline() {
     if(!this.#connected) { return; }
     if(this.#test && this.#run && this.#view) {
@@ -975,23 +990,14 @@ class WPTTest extends HTMLElement {
     let { config: cfg, directory: dir } = this.#getInlineConfig();
     if(cfg) {
       let test = `${dir}${cfg.testName || cfg.id}/runs/${cfg.run}/${cfg.view}/timeline.json`;
-      this.data = cfg;
-      this.avif = this.data.optimizedImages;
-      this.#_timeline = test;
-      this.#maybeNotify();
+      this.#setData(cfg, test);
     }
   }
 
   async updateTimeline(url) {
     if( (!url) || (url === this.#_timeline)) { return; }
-
-    this.#_timeline = url;
-    // Fetch and parse
-    try {
-      let r = await fetch(url);
-      this.data = await r.json();
-      this.avif = this.data.optimizedImages;
-      this.#maybeNotify();
+    try { // Fetch and parse
+      this.#setData((await (await fetch(url)).json()), url);
     } catch(e) {
       console.error(e);
       this.data = null;
@@ -1499,7 +1505,17 @@ class WPTTest extends HTMLElement {
     let figure = this.#video = container.lastElementChild;
     let v = figure.querySelector("video");
     v.poster = this.#relativeImgURL("poster.png");
-    v.src = this.#relativeImgURL("timeline.mp4");
+
+    // TODO: make relativeImgURL handle this
+    let fmt = "mp4";
+    if(
+      this.av1 && 
+      (v.canPlayType(`video/webm; codecs="av01.0.04M.08"`) === "probably")
+    ) {
+      fmt  = "webm";
+    }
+    v.src = this.#relativeImgURL(`timeline.${ fmt }`);
+
     this.#setMediaDimensions(figure);
     // TODO: set captions and alt
   }
