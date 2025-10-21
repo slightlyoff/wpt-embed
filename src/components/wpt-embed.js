@@ -140,6 +140,30 @@ let kbFormat = (kb=0) => {
   return ret;
 };
 
+// Intersection Observer for detecting when videos are fully in the viewport
+let visible = new Set();
+let iObs = new IntersectionObserver(
+  (entries, o) => {
+    entries.forEach((e) => {
+      visible[ e.isIntersecting ? "add" : "delete" ](e.target);
+      e.target.dispatchEvent(new CustomEvent("io-visibilitychange", {
+        bubbles: true,
+        cancelable: true,
+        detail: {
+          intersecting: e.isIntersecting,
+          entry: e,
+        }
+      }));
+    });
+  },
+  {
+    // We only care about what's visible
+    rootMargin: `0px 0px 0px 0px`,
+    // And only elements that are *mostly* in the viewport
+    threshold: [ 0.75 ],
+  }
+);
+
 class WPTEmbed extends HTMLElement {
 
   static observedAttributes = [
@@ -1518,6 +1542,11 @@ class WPTTest extends HTMLElement {
 
     this.#setMediaDimensions(figure);
     // TODO: set captions and alt
+
+    iObs.observe(v);
+    v.addEventListener("io-visibilitychange", (e) => {
+      v[ (e.detail.intersecting) ? "play" : "pause" ]();
+    });
   }
 
   #gif = null;
